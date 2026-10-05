@@ -1,0 +1,5 @@
+method,confidence,var,expected_shortfall
+Historical,0.99,737314.6436861192,983000.9839895732
+Parametric Normal,0.99,581745.0190667463,665993.781436324
+Monte Carlo Normal,0.99,584329.8420400862,669363.4892690296
+Weighted Historical (lambda=0.97),0.99,309497.7258282392,
