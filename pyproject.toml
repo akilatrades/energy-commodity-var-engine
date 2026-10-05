@@ -1,0 +1,20 @@
+[project]
+name = "energy-commodity-var-engine"
+version = "0.1.0"
+description = "Commodity portfolio VaR, Expected Shortfall, stress testing, attribution, and backtesting"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Akila Juan"}]
+keywords = [
+  "market-risk",
+  "value-at-risk",
+  "expected-shortfall",
+  "energy-trading",
+  "commodities",
+  "futures",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
