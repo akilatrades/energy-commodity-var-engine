@@ -117,18 +117,23 @@ def monte_carlo_factor_var_es(
     degrees_of_freedom: int = 6,
     seed: int = 42,
 ) -> tuple[float, float]:
-    """Simulate correlated Student-t market-factor returns and revalue the book."""
+    """Simulate correlated Student-t futures price changes and revalue the book.
+
+    Absolute price changes are used rather than percentage returns because
+    futures prices can cross or approach zero and because historical position
+    P&L is calculated directly from settlement-price changes.
+    """
     if n_sims <= 0:
         raise ValueError("n_sims must be positive.")
     if degrees_of_freedom <= 2:
         raise ValueError("degrees_of_freedom must be greater than 2.")
 
     symbols = [p.symbol for p in positions]
-    returns = prices[symbols].pct_change().dropna(how="any").astype(float)
-    if len(returns) < 20:
-        raise ValueError("At least 20 return observations are required.")
+    changes = prices[symbols].diff().dropna(how="any").astype(float)
+    if len(changes) < 20:
+        raise ValueError("At least 20 price-change observations are required.")
 
-    covariance = returns.cov().values
+    covariance = changes.cov().values
     scale = covariance * (degrees_of_freedom - 2) / degrees_of_freedom
     rng = np.random.default_rng(seed)
 
@@ -139,17 +144,13 @@ def monte_carlo_factor_var_es(
         check_valid="ignore",
     )
     chi = rng.chisquare(degrees_of_freedom, size=n_sims) / degrees_of_freedom
-    simulated_returns = normal_draws / np.sqrt(chi)[:, None]
+    simulated_changes = normal_draws / np.sqrt(chi)[:, None]
 
-    latest = prices[symbols].iloc[-1].astype(float)
-    sensitivities = np.array(
-        [
-            p.contracts * p.contract_multiplier * float(latest[p.symbol])
-            for p in positions
-        ],
+    unit_exposures = np.array(
+        [p.contracts * p.contract_multiplier for p in positions],
         dtype=float,
     )
-    simulated_pnl = simulated_returns @ sensitivities
+    simulated_pnl = simulated_changes @ unit_exposures
 
     cutoff = float(np.quantile(simulated_pnl, 1 - confidence))
     var = max(-cutoff, 0.0)

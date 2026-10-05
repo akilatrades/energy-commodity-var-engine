@@ -31,13 +31,16 @@
 
 ## Stress results
 
+Hypothetical scenarios report configured percentage shocks and position P&L. Historical replay reports observed absolute price changes and corresponding fixed-book P&L.
+
 | Field | Definition |
 |---|---|
 | scenario | Scenario name |
 | source_type | hypothetical or historical_replay |
 | source_date | Historical observation date where applicable |
-| symbol_shock_pct | Percentage market shock |
-| symbol_pnl | Position P&L under the shock |
+| symbol_shock_pct | Configured percentage shock for hypothetical scenarios |
+| symbol_price_change | Observed absolute price change for historical replay |
+| symbol_pnl | Position P&L under the scenario |
 | portfolio_stress_pnl | Total scenario P&L |
 
 ## Backtest summary

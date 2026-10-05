@@ -23,24 +23,30 @@ def run_hypothetical_scenarios(
 ) -> pd.DataFrame:
     """Apply configured percentage shocks to current portfolio sensitivities."""
     rows: list[dict] = []
-    for scenario in scenarios.itertuples(index=False):
+
+    for _, scenario in scenarios.iterrows():
         row = {
-            "scenario": str(scenario.scenario),
+            "scenario": str(scenario["scenario"]),
             "source_type": "hypothetical",
         }
         total = 0.0
-        scenario_map = scenario._asdict()
+
         for p in positions:
             if p.symbol not in latest_prices.index:
                 raise ValueError(f"Missing latest price for {p.symbol}.")
-            shock = float(scenario_map.get(p.symbol, 0.0))
+            if p.symbol not in scenarios.columns:
+                raise ValueError(f"Stress scenario file is missing {p.symbol}.")
+
+            shock = float(scenario[p.symbol])
             price_change = float(latest_prices[p.symbol]) * shock
             position_pnl = p.contracts * p.contract_multiplier * price_change
             row[f"{p.symbol}_shock_pct"] = shock
             row[f"{p.symbol}_pnl"] = position_pnl
             total += position_pnl
+
         row["portfolio_stress_pnl"] = total
         rows.append(row)
+
     return pd.DataFrame(rows)
 
 
@@ -49,12 +55,12 @@ def historical_replay_scenarios(
     positions: list[FuturesPosition],
     count: int = 5,
 ) -> pd.DataFrame:
-    """Return the worst observed fixed-book P&L days and realized factor moves."""
+    """Return the worst observed fixed-book P&L days and realized price changes."""
     if count <= 0:
         raise ValueError("count must be positive.")
 
     symbols = [p.symbol for p in positions]
-    returns = prices[symbols].pct_change().dropna(how="any")
+    changes = prices[symbols].diff().dropna(how="any")
     pnl = pnl_history_from_prices(prices, positions)
     worst_dates = pnl["portfolio_pnl"].nsmallest(min(count, len(pnl))).index
 
@@ -66,7 +72,7 @@ def historical_replay_scenarios(
             "source_date": pd.Timestamp(date).date().isoformat(),
         }
         for p in positions:
-            row[f"{p.symbol}_shock_pct"] = float(returns.loc[date, p.symbol])
+            row[f"{p.symbol}_price_change"] = float(changes.loc[date, p.symbol])
             row[f"{p.symbol}_pnl"] = float(pnl.loc[date, p.symbol])
         row["portfolio_stress_pnl"] = float(pnl.loc[date, "portfolio_pnl"])
         rows.append(row)

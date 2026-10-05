@@ -55,8 +55,8 @@ def validate_price_history(prices: pd.DataFrame, min_observations: int = 300) ->
         raise ValueError("Price history must be sorted in ascending date order.")
     if prices.isna().any().any():
         raise ValueError("Price history contains missing values after alignment.")
-    if (prices <= 0).any().any():
-        raise ValueError("Price history contains non-positive prices.")
+    if not np.isfinite(prices.to_numpy(dtype=float)).all():
+        raise ValueError("Price history contains non-finite values.")
 
 
 def make_demo_prices(n_days: int = 1_500, seed: int = 42) -> pd.DataFrame:

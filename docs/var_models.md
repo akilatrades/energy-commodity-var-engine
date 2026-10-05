@@ -20,12 +20,14 @@ Monte Carlo is implemented at the market-factor level rather than by drawing dir
 
 The model:
 
-1. estimates the covariance matrix of daily percentage changes across the four energy markets;
+1. estimates the covariance matrix of daily absolute futures price changes across the four energy markets;
 2. converts that covariance into a multivariate Student-t scale matrix;
-3. draws correlated heavy-tailed market returns;
-4. applies the simulated returns to current futures price sensitivities;
+3. draws correlated heavy-tailed futures price changes;
+4. applies those simulated changes through each contract multiplier and signed position;
 5. aggregates simulated position P&L into portfolio P&L;
 6. calculates VaR and Expected Shortfall from the simulated distribution.
+
+Absolute price changes are used because the historical P&L engine is also based on settlement-price changes and because futures prices can approach or cross zero.
 
 The degrees of freedom and simulation count are explicit configuration assumptions.
 
