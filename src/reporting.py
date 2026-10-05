@@ -27,14 +27,12 @@ def write_executive_summary(
     worst_hypo = hypothetical_stress.nsmallest(1, "portfolio_stress_pnl").iloc[0]
     worst_hist = historical_stress.nsmallest(1, "portfolio_stress_pnl").iloc[0]
 
-    risk_rows = "
-".join(
+    risk_rows = "\n".join(
         f"| {row.method} | {_money(row.var)} | {_money(row.expected_shortfall)} |"
         for row in var_summary.itertuples(index=False)
     )
 
-    validation_rows = "
-".join(
+    validation_rows = "\n".join(
         f"| {row.method} | {int(row.exceptions)} | {row.actual_exception_rate:.2%} | "
         f"{row.kupiec_p_value:.3f} | {row.independence_p_value:.3f} | "
         f"{row.conditional_coverage_p_value:.3f} |"
