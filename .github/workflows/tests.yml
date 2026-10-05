@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  pytest:
+  validation:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,5 +25,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Run unit tests
         run: pytest
+
+      - name: Run end-to-end demo smoke test
+        run: python run_analysis.py --mode demo --output-dir /tmp/energy-var-demo

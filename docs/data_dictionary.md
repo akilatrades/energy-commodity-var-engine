@@ -1,58 +1,63 @@
 # Data Dictionary
 
-## Portfolio positions
+## Position configuration
 
-| Field | Meaning |
+| Field | Definition |
 |---|---|
-| `symbol` | Market-data symbol used by the project. |
-| `name` | Human-readable market name. |
-| `contracts` | Signed number of futures contracts; positive = long, negative = short. |
-| `contract_multiplier` | Physical units represented by one contract. |
-| `currency` | Position currency. |
+| symbol | Public market-data symbol |
+| name | Instrument description |
+| contracts | Signed contract count; positive long, negative short |
+| contract_multiplier | Physical units per futures contract |
+| currency | Position currency |
 
-## Daily P&L
+## VaR method comparison
 
-| Field | Meaning |
+| Field | Definition |
 |---|---|
-| instrument symbol | Daily P&L of that fixed futures position. |
-| `portfolio_pnl` | Sum of all position P&L columns. |
-
-## VaR summary
-
-| Field | Meaning |
-|---|---|
-| `method` | Risk-model name. |
-| `confidence` | VaR confidence level. |
-| `var` | Positive loss magnitude at the VaR threshold. |
-| `expected_shortfall` | Average loss beyond VaR, where implemented. |
+| method | Risk methodology |
+| confidence | Confidence level |
+| var | Positive one-day loss threshold |
+| expected_shortfall | Average modeled loss beyond the VaR threshold |
 
 ## Component VaR
 
-| Field | Meaning |
+| Field | Definition |
 |---|---|
-| `marginal_var` | Change in total VaR per unit exposure under the simplified normal framework. |
-| `component_var` | Allocated VaR contribution from the position. |
-| `pct_of_total_var` | Component contribution divided by total parametric VaR. |
-| `diversifier` | True when component contribution is negative. |
+| symbol | Position identifier |
+| marginal_var | Change in Parametric VaR per unit exposure under the linear covariance model |
+| component_var | Allocated VaR contribution |
+| pct_of_total_var | Contribution as a share of total Parametric VaR |
+| diversifier | True when contribution is negative |
 
-## Backtesting
+## Stress results
 
-| Field | Meaning |
+| Field | Definition |
 |---|---|
-| `realized_pnl` | Next observed portfolio P&L. |
-| `var` | VaR estimated using prior observations. |
-| `exception` | True when realized loss exceeds VaR. |
-| `actual_exception_rate` | Exceptions divided by test observations. |
-| `lr_pof` | Kupiec likelihood-ratio statistic. |
-| `kupiec_p_value` | Kupiec test p-value. |
-| `lr_independence` | Christoffersen independence likelihood-ratio statistic. |
-| `independence_p_value` | Christoffersen independence test p-value. |
+| scenario | Scenario name |
+| source_type | hypothetical or historical_replay |
+| source_date | Historical observation date where applicable |
+| symbol_shock_pct | Percentage market shock |
+| symbol_pnl | Position P&L under the shock |
+| portfolio_stress_pnl | Total scenario P&L |
+
+## Backtest summary
+
+| Field | Definition |
+|---|---|
+| method | VaR model under review |
+| window | Estimation-window length |
+| decay | Exponential decay for Weighted Historical VaR |
+| exceptions | Number of realized losses beyond forecast VaR |
+| actual_exception_rate | Realized exception frequency |
+| kupiec_p_value | Unconditional-coverage test p-value |
+| independence_p_value | Christoffersen exception-independence p-value |
+| conditional_coverage_p_value | Combined coverage and independence p-value |
 
 ## Limit monitoring
 
-| Field | Meaning |
+| Field | Definition |
 |---|---|
-| `value` | Current risk measure. |
-| `limit` | Illustrative approved limit. |
-| `utilization` | value / limit. |
-| `status` | `OK`, `WATCH`, or `BREACH`. |
+| value | Current risk measure |
+| limit | Configured limit |
+| utilization | value divided by limit |
+| status | OK, WATCH, or BREACH |

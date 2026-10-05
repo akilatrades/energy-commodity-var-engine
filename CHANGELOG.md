@@ -1,24 +1,22 @@
 # Changelog
 
+## 0.2.0
+
+Professionalization and model-validation release.
+
+### Changed
+
+- moved portfolio, model, stress, and limit assumptions into configuration files
+- replaced portfolio-level normal Monte Carlo with correlated Student-t risk-factor simulation
+- added model-comparison backtesting across Historical, Parametric, and Weighted Historical VaR
+- added calibration sensitivity across lookback windows and decay assumptions
+- added historical replay stress scenarios derived directly from observed market moves
+- tightened executive reporting and model-governance language
+- renamed analytical notebooks around professional review workflow
+- removed beginner-facing documentation from the public repository
+- moved synthetic/demo material out of the primary results layer
+- updated CI to run both unit tests and an end-to-end demo smoke test
+
 ## 0.1.0
 
-Initial professional market-risk framework.
-
-### Added
-
-- illustrative multi-commodity energy futures book
-- exact linear futures daily P&L calculation
-- 99% historical VaR and Expected Shortfall
-- parametric normal VaR and Expected Shortfall
-- Monte Carlo normal VaR and Expected Shortfall
-- exponentially weighted historical VaR
-- parametric component VaR attribution
-- deterministic stress scenarios
-- rolling out-of-sample VaR forecasts
-- Kupiec unconditional-coverage backtest
-- Christoffersen exception-independence backtest
-- illustrative VaR limit monitoring
-- management-style executive summary
-- guided notebooks and beginner documentation
-- pytest test suite
-- GitHub Actions CI workflow
+Initial market-risk framework with multi-commodity futures P&L, VaR, Expected Shortfall, risk attribution, stress testing, rolling validation, and illustrative limit monitoring.

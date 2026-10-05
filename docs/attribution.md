@@ -1,32 +1,11 @@
 # Risk Attribution
 
-## Why attribution matters
+Portfolio VaR is more useful when its drivers can be explained.
 
-A senior risk report should not stop at:
+The project allocates Normal Parametric VaR across positions using each position's covariance with total portfolio P&L.
 
-> Portfolio VaR = $X
+A positive component contribution increases portfolio VaR under the estimated covariance structure. A negative contribution indicates diversification.
 
-A risk manager also needs to understand what is driving the number.
+Component contributions sum to total Parametric VaR up to floating-point tolerance.
 
-## Component VaR
-
-For the current linear normal model, component VaR is based on each position's covariance with the total portfolio.
-
-A positive component VaR means the position contributes risk.
-
-A negative component VaR means the position is acting as a diversifier under the estimated covariance structure.
-
-The component contributions sum to total parametric VaR, up to rounding.
-
-## Interpretation caution
-
-A negative contribution does not mean the position is "safe."
-
-The diversification relationship can change when:
-
-- correlations shift,
-- volatility changes,
-- liquidity deteriorates,
-- market structure breaks down.
-
-That is why attribution should be viewed alongside stress testing and backtesting.
+A negative contribution should not be interpreted as a permanently protective position. Correlations, volatilities, and liquidity conditions can change, which is why attribution is reviewed alongside stress testing and validation.

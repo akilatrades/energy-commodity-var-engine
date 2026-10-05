@@ -1,44 +1,74 @@
-"""Deterministic stress testing for the illustrative energy book."""
+"""Hypothetical and historical stress testing."""
 
 from __future__ import annotations
 
-from typing import Mapping
+from pathlib import Path
 
 import pandas as pd
 
-from src.portfolio import FuturesPosition
+from src.portfolio import FuturesPosition, pnl_history_from_prices
 
 
-DEFAULT_STRESSES: dict[str, dict[str, float]] = {
-    "Broad energy selloff": {"CL=F": -0.20, "RB=F": -0.18, "HO=F": -0.17, "NG=F": -0.25},
-    "Crude rally / products lag": {"CL=F": 0.20, "RB=F": 0.10, "HO=F": 0.08, "NG=F": 0.05},
-    "Refined-products squeeze": {"CL=F": 0.05, "RB=F": 0.22, "HO=F": 0.18, "NG=F": 0.00},
-    "Natural-gas shock": {"CL=F": 0.00, "RB=F": 0.00, "HO=F": 0.00, "NG=F": 0.35},
-}
+def load_stress_scenarios(path: str | Path) -> pd.DataFrame:
+    frame = pd.read_csv(path)
+    if "scenario" not in frame.columns or frame.empty:
+        raise ValueError("Stress scenario file must contain a scenario column and rows.")
+    return frame
 
 
-def run_stress_scenarios(
+def run_hypothetical_scenarios(
     latest_prices: pd.Series,
     positions: list[FuturesPosition],
-    scenarios: Mapping[str, Mapping[str, float]] | None = None,
+    scenarios: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Apply percentage price shocks and calculate linear futures P&L."""
-    scenarios = scenarios or DEFAULT_STRESSES
-    rows = []
-
-    for scenario_name, shocks in scenarios.items():
+    """Apply configured percentage shocks to current portfolio sensitivities."""
+    rows: list[dict] = []
+    for scenario in scenarios.itertuples(index=False):
+        row = {
+            "scenario": str(scenario.scenario),
+            "source_type": "hypothetical",
+        }
         total = 0.0
-        row: dict[str, float | str] = {"scenario": scenario_name}
+        scenario_map = scenario._asdict()
         for p in positions:
             if p.symbol not in latest_prices.index:
                 raise ValueError(f"Missing latest price for {p.symbol}.")
-            shock = float(shocks.get(p.symbol, 0.0))
+            shock = float(scenario_map.get(p.symbol, 0.0))
             price_change = float(latest_prices[p.symbol]) * shock
-            pnl = p.contracts * p.contract_multiplier * price_change
+            position_pnl = p.contracts * p.contract_multiplier * price_change
             row[f"{p.symbol}_shock_pct"] = shock
-            row[f"{p.symbol}_pnl"] = pnl
-            total += pnl
+            row[f"{p.symbol}_pnl"] = position_pnl
+            total += position_pnl
         row["portfolio_stress_pnl"] = total
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def historical_replay_scenarios(
+    prices: pd.DataFrame,
+    positions: list[FuturesPosition],
+    count: int = 5,
+) -> pd.DataFrame:
+    """Return the worst observed fixed-book P&L days and realized factor moves."""
+    if count <= 0:
+        raise ValueError("count must be positive.")
+
+    symbols = [p.symbol for p in positions]
+    returns = prices[symbols].pct_change().dropna(how="any")
+    pnl = pnl_history_from_prices(prices, positions)
+    worst_dates = pnl["portfolio_pnl"].nsmallest(min(count, len(pnl))).index
+
+    rows: list[dict] = []
+    for date in worst_dates:
+        row = {
+            "scenario": f"Historical replay {pd.Timestamp(date).date()}",
+            "source_type": "historical_replay",
+            "source_date": pd.Timestamp(date).date().isoformat(),
+        }
+        for p in positions:
+            row[f"{p.symbol}_shock_pct"] = float(returns.loc[date, p.symbol])
+            row[f"{p.symbol}_pnl"] = float(pnl.loc[date, p.symbol])
+        row["portfolio_stress_pnl"] = float(pnl.loc[date, "portfolio_pnl"])
         rows.append(row)
 
     return pd.DataFrame(rows)

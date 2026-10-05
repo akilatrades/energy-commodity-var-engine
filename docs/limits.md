@@ -1,34 +1,15 @@
 # Risk Limits
 
-## Business interpretation
+The project compares current Historical VaR with a configurable illustrative limit stored in **config/risk_limits.json**.
 
-A calculated risk measure becomes a control when it is compared with an approved limit.
+Reported fields are current VaR, limit, utilization, and status.
 
-Example:
+The default project convention is:
 
-```text
-99% VaR = $420,000
-VaR limit = $500,000
-Utilization = 84%
-```
+- utilization below 90%: OK
+- 90% to below 100%: WATCH
+- 100% or above: BREACH
 
-The project labels:
+These thresholds are project assumptions, not universal industry rules.
 
-- below 90%: `OK`
-- 90% to below 100%: `WATCH`
-- 100% or more: `BREACH`
-
-These thresholds are illustrative project conventions, not industry-wide rules.
-
-## What a real Market Risk function would do
-
-Depending on policy, a high utilization or breach can require:
-
-- trader notification,
-- desk-management escalation,
-- risk reduction,
-- formal temporary limit increase,
-- documented exception approval,
-- additional monitoring.
-
-Limit governance is organizational and cannot be inferred solely from a numerical model.
+In a production environment, escalation and remediation would be governed by formal policy and could include trader notification, desk escalation, risk reduction, temporary limit approval, or documented exception handling.

@@ -4,3 +4,12 @@ __pycache__/
 .ipynb_checkpoints/
 *.pyc
 .DS_Store
+
+data/demo_synthetic_prices.csv
+data/latest_public_price_snapshot.csv
+
+outputs/*.csv
+outputs/*.svg
+outputs/*.json
+outputs/executive_summary.md
+!outputs/README.md

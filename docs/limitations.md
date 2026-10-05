@@ -1,77 +1,45 @@
-# Model Limitations
+# Model Limitations and Use Boundary
 
-A professional risk project should state clearly what the model does not capture.
+This repository is an analytical Market Risk portfolio project, not a production risk platform.
 
-## Instrument limitations
+## Instruments
 
-The current book contains linear futures only.
+The portfolio contains linear futures only.
 
-It does not model:
+The framework does not currently model options, nonlinear Greeks, swaps with complex settlement rules, structured products, or path-dependent derivatives.
 
-- options,
-- delta/gamma/vega/theta,
-- swaps with complex settlement conventions,
-- structured products,
-- path-dependent derivatives.
+## Market data
 
-## Market-data limitations
+Historical mode uses public continuous futures proxies.
 
-Live mode uses public continuous futures proxies.
+A production implementation would require exact instrument identifiers, official or independently validated settlement prices, contract calendars, explicit roll logic, timestamp controls, stale-price checks, and governed market-data lineage.
 
-These are not equivalent to production market data because a real environment would require:
+Continuous futures construction can introduce roll-related price changes that influence calculated P&L and VaR.
 
-- exact contract identifiers,
-- exchange settlement sources,
-- roll calendars,
-- independent price verification,
-- timestamps and stale-price controls,
-- corporate data governance.
+## VaR
 
-## VaR limitations
+Historical VaR is sample dependent and cannot represent events absent from the historical window.
 
-Historical VaR can miss events absent from the historical window.
+Parametric Normal VaR can understate fat-tail behavior.
 
-Parametric and Monte Carlo normal VaR assume a distribution that can understate fat-tail behavior.
+Student-t Monte Carlo still depends on estimated covariance, a chosen degrees-of-freedom parameter, fixed linear sensitivities, and a stationary-distribution assumption.
 
-Weighted historical VaR introduces a decay parameter that itself creates model risk.
+Weighted Historical VaR adds a decay parameter that introduces additional calibration risk.
 
-No VaR method should be interpreted as a maximum possible loss.
+No VaR method is a maximum-loss estimate.
 
-## Portfolio limitations
+## Portfolio assumptions
 
-The project excludes:
+The analysis holds contract counts fixed across the historical P&L sample. It therefore measures the historical behavior of today's illustrative position structure rather than reconstructing an actual evolving trading book.
 
-- intraday position changes,
-- FX conversion,
-- basis and location mapping,
-- calendar-spread risk decomposition,
-- liquidity risk,
-- concentration add-ons,
-- margin and funding,
-- transaction costs.
+The project does not include intraday position changes, FX translation, transaction costs, liquidity add-ons, concentration add-ons, initial or variation margin, funding, or counterparty credit risk.
 
-## Backtesting limitations
+## Validation
 
-A backtest can diagnose a problem without identifying its root cause.
+Backtest results are sample dependent. At 99% confidence, exceptions are intentionally rare, which limits statistical power in short samples.
 
-Exception counts can also be noisy in small samples, especially at 99% confidence because exceptions are intentionally rare.
+The project does not optimize parameters solely to improve p-values.
 
 ## Production-control gap
 
-A real bank or trading company would require controls around:
-
-- trade capture,
-- valuations,
-- sensitivities,
-- risk-factor mapping,
-- data quality,
-- P&L explain,
-- risk limits,
-- approvals,
-- audit trails,
-- model governance,
-- change management,
-- access control,
-- regulatory reporting where applicable.
-
-This repository is a learning and portfolio project rather than a production Market Risk platform.
+A production Market Risk environment would additionally require trade-capture controls, independent valuations, risk-factor mapping, sensitivity validation, P&L explain, formal limit governance, model approval, change management, access control, audit trails, business continuity, and integration with front-office and risk systems.

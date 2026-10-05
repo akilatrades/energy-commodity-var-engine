@@ -1,28 +1,45 @@
-"""Run the full energy commodity VaR project and refresh saved outputs."""
+"""Run the energy commodity market-risk analysis."""
 
 from __future__ import annotations
 
 import argparse
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from src.attribution import component_var
-from src.backtesting import rolling_var_forecasts, summarize_backtest
+from src.backtesting import calibration_sensitivity, compare_backtests
 from src.data import download_yahoo_prices, make_demo_prices, save_price_snapshot
-from src.limits import limit_status
-from src.portfolio import default_energy_book, pnl_history_from_prices, positions_to_frame
+from src.limits import limit_status, load_risk_limits
+from src.portfolio import load_positions_csv, pnl_history_from_prices, positions_to_frame
 from src.reporting import write_executive_summary
-from src.stress import run_stress_scenarios
+from src.stress import (
+    historical_replay_scenarios,
+    load_stress_scenarios,
+    run_hypothetical_scenarios,
+)
 from src.var_models import summarize_var_methods
 
-OUTPUT = Path("outputs")
+
+CONFIG = Path("config")
 DATA = Path("data")
 
 
-def make_charts(pnl: pd.DataFrame, rolling: pd.DataFrame, component: pd.DataFrame) -> None:
-    OUTPUT.mkdir(exist_ok=True)
+def load_model_config() -> dict:
+    with open(CONFIG / "model_config.json", "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def make_charts(
+    output: Path,
+    pnl: pd.DataFrame,
+    forecasts: pd.DataFrame,
+    component: pd.DataFrame,
+) -> None:
+    output.mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(11, 6))
     plt.plot(pnl.index, pnl["portfolio_pnl"] / 1_000)
@@ -31,21 +48,36 @@ def make_charts(pnl: pd.DataFrame, rolling: pd.DataFrame, component: pd.DataFram
     plt.ylabel("P&L ($000)")
     plt.xlabel("Date")
     plt.tight_layout()
-    plt.savefig(OUTPUT / "portfolio_pnl_history.svg")
+    plt.savefig(output / "portfolio_pnl_history.svg")
     plt.close()
 
+    historical = forecasts[forecasts["method"] == "historical"].copy()
+    historical["date"] = pd.to_datetime(historical["date"])
     plt.figure(figsize=(11, 6))
-    plt.plot(rolling.index, rolling["realized_pnl"] / 1_000, label="Realized P&L")
-    plt.plot(rolling.index, -rolling["var"] / 1_000, label="99% VaR threshold")
-    ex = rolling[rolling["exception"]]
-    if not ex.empty:
-        plt.scatter(ex.index, ex["realized_pnl"] / 1_000, label="Exceptions", s=16)
+    plt.plot(
+        historical["date"],
+        historical["realized_pnl"] / 1_000,
+        label="Realized P&L",
+    )
+    plt.plot(
+        historical["date"],
+        -historical["var"] / 1_000,
+        label="99% VaR threshold",
+    )
+    exceptions = historical[historical["exception"]]
+    if not exceptions.empty:
+        plt.scatter(
+            exceptions["date"],
+            exceptions["realized_pnl"] / 1_000,
+            label="Exceptions",
+            s=16,
+        )
     plt.title("Rolling Historical VaR Backtest")
     plt.ylabel("$000")
     plt.xlabel("Date")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(OUTPUT / "var_backtest.svg")
+    plt.savefig(output / "var_backtest.svg")
     plt.close()
 
     plt.figure(figsize=(9, 6))
@@ -55,66 +87,138 @@ def make_charts(pnl: pd.DataFrame, rolling: pd.DataFrame, component: pd.DataFram
     plt.ylabel("Component VaR ($000)")
     plt.xlabel("Position")
     plt.tight_layout()
-    plt.savefig(OUTPUT / "component_var.svg")
+    plt.savefig(output / "component_var.svg")
     plt.close()
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["demo", "live"], default="demo")
+    parser.add_argument("--mode", choices=["demo", "live"], required=True)
+    parser.add_argument("--output-dir", default="outputs")
     args = parser.parse_args()
 
-    OUTPUT.mkdir(exist_ok=True)
-    DATA.mkdir(exist_ok=True)
+    output = Path(args.output_dir)
+    output.mkdir(parents=True, exist_ok=True)
+
+    model = load_model_config()
+    positions = load_positions_csv(CONFIG / "portfolio.csv")
+    stress_config = load_stress_scenarios(CONFIG / "stress_scenarios.csv")
+    limits = load_risk_limits(CONFIG / "risk_limits.json")
 
     if args.mode == "live":
-        prices = download_yahoo_prices()
+        prices = download_yahoo_prices(
+            [p.symbol for p in positions],
+            start=model["historical_start"],
+        )
         save_price_snapshot(prices, DATA / "latest_public_price_snapshot.csv")
     else:
         prices = make_demo_prices()
         save_price_snapshot(prices, DATA / "demo_synthetic_prices.csv")
 
-    positions = default_energy_book()
-    positions_df = positions_to_frame(positions)
-    positions_df.to_csv(OUTPUT / "portfolio_positions.csv", index=False)
-
     pnl = pnl_history_from_prices(prices, positions)
-    pnl.index.name = "date"
-    pnl.to_csv(OUTPUT / "daily_position_pnl.csv")
 
-    var_summary = summarize_var_methods(pnl["portfolio_pnl"], confidence=0.99)
-    var_summary.to_csv(OUTPUT / "var_method_comparison.csv", index=False)
-
-    component = component_var(pnl, confidence=0.99)
-    component.to_csv(OUTPUT / "component_var.csv", index=False)
-
-    stresses = run_stress_scenarios(prices.iloc[-1], positions)
-    stresses.to_csv(OUTPUT / "stress_scenarios.csv", index=False)
-
-    rolling = rolling_var_forecasts(
-        pnl["portfolio_pnl"], window=250, confidence=0.99, method="historical"
+    positions_to_frame(positions).to_csv(
+        output / "portfolio_positions.csv", index=False
     )
-    rolling.to_csv(OUTPUT / "historical_var_backtest.csv")
-    backtest_summary = summarize_backtest(rolling, confidence=0.99)
-    backtest_summary.to_csv(OUTPUT / "backtest_summary.csv", index=False)
+    pnl.index.name = "date"
+    pnl.to_csv(output / "daily_position_pnl.csv")
 
-    hist_var = float(var_summary.loc[var_summary["method"] == "Historical", "var"].iloc[0])
-    risk_limit = limit_status(hist_var, limit=500_000)
-    pd.DataFrame([risk_limit]).to_csv(OUTPUT / "limit_monitoring.csv", index=False)
+    var_summary = summarize_var_methods(
+        pnl["portfolio_pnl"],
+        prices=prices,
+        positions=positions,
+        confidence=model["confidence"],
+        decay=model["weighted_decay"],
+        n_sims=model["monte_carlo_sims"],
+        monte_carlo_df=model["monte_carlo_student_t_df"],
+        mean_adjusted=model["parametric_mean_adjusted"],
+    )
+    var_summary.to_csv(output / "var_method_comparison.csv", index=False)
 
-    make_charts(pnl, rolling, component)
+    component = component_var(pnl, confidence=model["confidence"])
+    component.to_csv(output / "component_var.csv", index=False)
+
+    hypothetical = run_hypothetical_scenarios(
+        prices.iloc[-1],
+        positions,
+        stress_config,
+    )
+    hypothetical.to_csv(output / "hypothetical_stress_scenarios.csv", index=False)
+
+    historical = historical_replay_scenarios(
+        prices,
+        positions,
+        count=model["historical_stress_count"],
+    )
+    historical.to_csv(output / "historical_replay_stress.csv", index=False)
+
+    backtest_summary, forecasts = compare_backtests(
+        pnl["portfolio_pnl"],
+        methods=model["backtest_methods"],
+        window=model["backtest_window"],
+        confidence=model["confidence"],
+        decay=model["weighted_decay"],
+        mean_adjusted=model["parametric_mean_adjusted"],
+    )
+    backtest_summary.to_csv(output / "var_backtest_summary.csv", index=False)
+    forecasts.to_csv(output / "var_backtest_forecasts.csv", index=False)
+
+    sensitivity = calibration_sensitivity(
+        pnl["portfolio_pnl"],
+        windows=model["sensitivity_windows"],
+        confidence=model["confidence"],
+        decays=model["sensitivity_decays"],
+        mean_adjusted=model["parametric_mean_adjusted"],
+    )
+    sensitivity.to_csv(output / "calibration_sensitivity.csv", index=False)
+
+    historical_var_value = float(
+        var_summary.loc[var_summary["method"] == "Historical", "var"].iloc[0]
+    )
+    limit_result = limit_status(
+        historical_var_value,
+        limit=float(limits["var_99_1d_usd"]),
+        watch_threshold=float(limits["watch_utilization"]),
+    )
+    pd.DataFrame([limit_result]).to_csv(
+        output / "limit_monitoring.csv", index=False
+    )
+
+    make_charts(output, pnl, forecasts, component)
+
+    as_of = pd.Timestamp(prices.index[-1]).date().isoformat()
+    metadata = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "as_of": as_of,
+        "mode": args.mode,
+        "data_source": (
+            "Yahoo Finance public continuous futures proxies"
+            if args.mode == "live"
+            else "deterministic synthetic demo data"
+        ),
+        "observations": int(len(prices)),
+        "symbols": [p.symbol for p in positions],
+        "confidence": model["confidence"],
+        "backtest_window": model["backtest_window"],
+    }
+    (output / "analysis_metadata.json").write_text(
+        json.dumps(metadata, indent=2),
+        encoding="utf-8",
+    )
 
     write_executive_summary(
-        OUTPUT / "executive_summary.md",
+        output / "executive_summary.md",
+        as_of=as_of,
         data_mode=args.mode,
         var_summary=var_summary,
         component=component,
-        stresses=stresses,
+        hypothetical_stress=hypothetical,
+        historical_stress=historical,
         backtest_summary=backtest_summary,
-        limit_status=risk_limit,
+        limit_result=limit_result,
     )
 
-    print(f"Analysis complete in {args.mode.upper()} mode. See outputs/.")
+    print(f"Analysis complete in {args.mode.upper()} mode. Results: {output}")
 
 
 if __name__ == "__main__":

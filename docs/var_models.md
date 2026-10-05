@@ -1,75 +1,44 @@
 # VaR and Expected Shortfall Models
 
-## 1. Historical VaR
+## Historical
 
-Historical VaR sorts prior portfolio P&L observations and reads the lower-tail percentile.
+Historical VaR uses the observed portfolio P&L distribution directly. Historical Expected Shortfall measures the average loss beyond the historical VaR threshold.
 
-For 99% confidence:
+Primary strengths are transparency and minimal distributional assumptions. Primary limitations are dependence on the selected sample and slow response when old observations receive the same weight as recent observations.
 
-```text
-VaR = positive magnitude of the 1st percentile of historical P&L
-```
+## Parametric Normal
 
-### Strengths
+Parametric VaR estimates portfolio volatility and maps the selected confidence level through the normal distribution.
 
-- simple to explain,
-- preserves historical nonlinear distribution shape in the P&L series,
-- no normality assumption.
+The default project configuration assumes zero expected one-day P&L rather than estimating a short-horizon drift.
 
-### Weaknesses
+This method is fast and transparent, but normality can understate fat-tail behavior and regime changes.
 
-- limited to events present in the historical window,
-- equal-weight history can react slowly to volatility changes,
-- sensitive to window selection.
+## Correlated Student-t Monte Carlo
 
-## 2. Parametric normal VaR
+Monte Carlo is implemented at the market-factor level rather than by drawing directly from a fitted portfolio P&L distribution.
 
-The model estimates mean and standard deviation of portfolio P&L and assumes a normal distribution.
+The model:
 
-```text
-P&L quantile = mean + z × sigma
-VaR = -lower-tail quantile
-```
+1. estimates the covariance matrix of daily percentage changes across the four energy markets;
+2. converts that covariance into a multivariate Student-t scale matrix;
+3. draws correlated heavy-tailed market returns;
+4. applies the simulated returns to current futures price sensitivities;
+5. aggregates simulated position P&L into portfolio P&L;
+6. calculates VaR and Expected Shortfall from the simulated distribution.
 
-### Strengths
+The degrees of freedom and simulation count are explicit configuration assumptions.
 
-- fast,
-- transparent,
-- easy to attribute using covariance.
+This creates a meaningfully different tail model from Normal Parametric VaR while remaining explainable.
 
-### Weaknesses
+## Weighted Historical
 
-- normality can underrepresent fat tails,
-- may not react well to volatility regimes,
-- unsuitable for nonlinear portfolios without additional modeling.
+Weighted Historical VaR assigns larger probability weight to recent P&L observations using exponential decay.
 
-## 3. Monte Carlo VaR
+The decay parameter is not optimized to make a backtest pass. The project reports sensitivity across multiple decay values so the calibration choice remains visible.
 
-The current implementation simulates many daily portfolio P&L observations from the fitted normal distribution.
+## Expected Shortfall
 
-This is intentionally a teaching baseline. A production implementation could simulate correlated market risk factors, stochastic volatility, jumps, options repricing, and other nonlinear effects.
+Expected Shortfall measures average loss conditional on being beyond the VaR threshold.
 
-## 4. Expected Shortfall
-
-Expected Shortfall averages the losses in the tail beyond the VaR threshold.
-
-Conceptually:
-
-```text
-ES = average loss conditional on loss being at or beyond VaR
-```
-
-It is useful because VaR gives a threshold but does not say how severe losses can be once the threshold has been exceeded.
-
-## 5. Weighted Historical VaR
-
-The project uses exponential probability weights:
-
-```text
-recent observations -> larger weight
-older observations  -> smaller weight
-```
-
-The objective is to demonstrate a simple way to make a historical model more responsive to current volatility.
-
-The decay factor is a model assumption and must be documented and validated rather than chosen solely because it improves one backtest.
+It complements VaR by describing tail severity rather than only the percentile boundary.

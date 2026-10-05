@@ -1,26 +1,17 @@
-# Data
+# Market Data
 
 The project supports two data modes.
 
+## Historical public proxy mode
+
+The live analysis requests daily public continuous futures proxies from Yahoo Finance for WTI crude oil, RBOB gasoline, heating oil, and Henry Hub natural gas.
+
+The series are aligned on common dates and validated for missing values, duplicate timestamps, non-positive prices, and minimum sample length before risk calculations are run.
+
+These public continuous futures series are research proxies. They are not a substitute for contract-specific exchange settlements or production market-data systems. Continuous-series roll construction can affect observed price changes and therefore can affect P&L and VaR estimates.
+
 ## Demo mode
 
-`python run_analysis.py --mode demo`
+Demo mode generates deterministic synthetic correlated energy prices so the full code path can run offline and in CI.
 
-Generates a deterministic synthetic dataset with correlated and mildly clustered energy-market volatility. This exists for reproducibility and offline learning.
-
-**Synthetic results must never be described as historical market findings.**
-
-## Live mode
-
-`python run_analysis.py --mode live`
-
-Attempts to download public continuous futures proxies through Yahoo Finance:
-
-- `CL=F` — WTI crude oil
-- `RB=F` — RBOB gasoline
-- `HO=F` — heating oil
-- `NG=F` — Henry Hub natural gas
-
-These series are convenient public proxies. They are not equivalent to contract-specific market data from a production trading or risk system.
-
-A production framework would require validated instrument identifiers, official settlements, roll logic, contract calendars, timestamps, independent price verification, and data-quality controls.
+Synthetic output is for reproducibility only and is not treated as a historical market finding.

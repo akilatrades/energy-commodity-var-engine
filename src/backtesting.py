@@ -1,4 +1,4 @@
-"""VaR forecast backtesting utilities."""
+"""Rolling VaR backtesting and calibration sensitivity."""
 
 from __future__ import annotations
 
@@ -16,13 +16,14 @@ def rolling_var_forecasts(
     confidence: float = 0.99,
     method: str = "historical",
     decay: float = 0.97,
+    mean_adjusted: bool = False,
 ) -> pd.DataFrame:
-    """Estimate VaR using only prior observations and test the next day's P&L."""
+    """Estimate VaR from prior observations and compare with next realized P&L."""
     x = pd.Series(pnl, copy=True).dropna().astype(float).sort_index()
     if len(x) <= window:
         raise ValueError("Not enough observations for rolling backtesting.")
 
-    rows = []
+    rows: list[dict] = []
     for i in range(window, len(x)):
         train = x.iloc[i - window : i]
         realized = float(x.iloc[i])
@@ -30,15 +31,20 @@ def rolling_var_forecasts(
         if method == "historical":
             var = historical_var(train, confidence)
         elif method == "parametric":
-            var = parametric_var(train, confidence)
+            var = parametric_var(train, confidence, mean_adjusted)
         elif method == "weighted_historical":
             var = weighted_historical_var(train, confidence, decay)
         else:
-            raise ValueError("method must be historical, parametric, or weighted_historical.")
+            raise ValueError(
+                "method must be historical, parametric, or weighted_historical."
+            )
 
         rows.append(
             {
                 "date": x.index[i],
+                "method": method,
+                "window": window,
+                "decay": decay if method == "weighted_historical" else None,
                 "realized_pnl": realized,
                 "var": var,
                 "exception": realized < -var,
@@ -49,7 +55,6 @@ def rolling_var_forecasts(
 
 
 def kupiec_pof_test(exceptions: pd.Series, confidence: float = 0.99) -> dict:
-    """Kupiec unconditional-coverage likelihood-ratio test."""
     e = pd.Series(exceptions).astype(bool).dropna()
     n = int(len(e))
     x = int(e.sum())
@@ -59,15 +64,16 @@ def kupiec_pof_test(exceptions: pd.Series, confidence: float = 0.99) -> dict:
     p = 1 - confidence
     phat = x / n
 
-    def safe_term(prob: float, count: int) -> float:
+    def term(prob: float, count: int) -> float:
         if count == 0:
             return 0.0
         if prob <= 0:
             return -math.inf
         return count * math.log(prob)
 
-    ll_null = safe_term(1 - p, n - x) + safe_term(p, x)
-    ll_alt = safe_term(1 - phat, n - x) + safe_term(phat, x)
+    ll_null = term(1 - p, n - x) + term(p, x)
+    ll_alt = term(1 - phat, n - x) + term(phat, x)
+
     if not math.isfinite(ll_alt):
         lr = math.inf
         p_value = 0.0
@@ -86,7 +92,6 @@ def kupiec_pof_test(exceptions: pd.Series, confidence: float = 0.99) -> dict:
 
 
 def christoffersen_independence_test(exceptions: pd.Series) -> dict:
-    """Christoffersen first-order exception-independence test."""
     e = pd.Series(exceptions).astype(int).dropna().to_numpy()
     if len(e) < 2:
         raise ValueError("At least two exception observations are required.")
@@ -102,14 +107,15 @@ def christoffersen_independence_test(exceptions: pd.Series) -> dict:
         else:
             n11 += 1
 
-    def ratio(a: int, b: int) -> float:
-        return a / (a + b) if (a + b) else 0.0
+    def probability(successes: int, failures: int) -> float:
+        total = successes + failures
+        return successes / total if total else 0.0
 
-    pi01 = ratio(n01, n00)
-    pi11 = ratio(n11, n10)
+    pi01 = probability(n01, n00)
+    pi11 = probability(n11, n10)
     total_exc = n01 + n11
-    total_trans = n00 + n01 + n10 + n11
-    pi = total_exc / total_trans if total_trans else 0.0
+    total_transitions = n00 + n01 + n10 + n11
+    pi = total_exc / total_transitions if total_transitions else 0.0
 
     def loglik(prob: float, successes: int, failures: int) -> float:
         out = 0.0
@@ -123,7 +129,7 @@ def christoffersen_independence_test(exceptions: pd.Series) -> dict:
             out += failures * math.log(1 - prob)
         return out
 
-    ll_null = loglik(pi, total_exc, total_trans - total_exc)
+    ll_null = loglik(pi, total_exc, total_transitions - total_exc)
     ll_alt = loglik(pi01, n01, n00) + loglik(pi11, n11, n10)
 
     if not math.isfinite(ll_alt):
@@ -147,10 +153,19 @@ def summarize_backtest(
     results: pd.DataFrame,
     confidence: float = 0.99,
 ) -> pd.DataFrame:
-    """Return coverage and independence diagnostics in one table."""
     kupiec = kupiec_pof_test(results["exception"], confidence)
     christ = christoffersen_independence_test(results["exception"])
+    conditional_lr = kupiec["lr_pof"] + christ["lr_independence"]
+    conditional_p = (
+        0.0
+        if math.isinf(conditional_lr)
+        else float(1 - chi2.cdf(conditional_lr, df=2))
+    )
+
     row = {
+        "method": str(results["method"].iloc[0]),
+        "window": int(results["window"].iloc[0]),
+        "decay": results["decay"].iloc[0],
         "confidence": confidence,
         "observations": kupiec["observations"],
         "exceptions": kupiec["exceptions"],
@@ -158,13 +173,81 @@ def summarize_backtest(
         "actual_exception_rate": kupiec["actual_exception_rate"],
         "lr_pof": kupiec["lr_pof"],
         "kupiec_p_value": kupiec["p_value"],
-        "n00": christ["n00"],
-        "n01": christ["n01"],
-        "n10": christ["n10"],
-        "n11": christ["n11"],
         "lr_independence": christ["lr_independence"],
         "independence_p_value": christ["p_value"],
+        "conditional_coverage_lr": conditional_lr,
+        "conditional_coverage_p_value": conditional_p,
         "kupiec_pass_5pct": kupiec["p_value"] >= 0.05,
         "independence_pass_5pct": christ["p_value"] >= 0.05,
+        "conditional_coverage_pass_5pct": conditional_p >= 0.05,
     }
     return pd.DataFrame([row])
+
+
+def compare_backtests(
+    pnl: pd.Series,
+    methods: list[str],
+    window: int,
+    confidence: float,
+    decay: float,
+    mean_adjusted: bool = False,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    summaries = []
+    forecasts = []
+
+    for method in methods:
+        result = rolling_var_forecasts(
+            pnl,
+            window=window,
+            confidence=confidence,
+            method=method,
+            decay=decay,
+            mean_adjusted=mean_adjusted,
+        )
+        summaries.append(summarize_backtest(result, confidence))
+        forecasts.append(result.reset_index())
+
+    return (
+        pd.concat(summaries, ignore_index=True),
+        pd.concat(forecasts, ignore_index=True),
+    )
+
+
+def calibration_sensitivity(
+    pnl: pd.Series,
+    windows: list[int],
+    confidence: float,
+    decays: list[float],
+    mean_adjusted: bool = False,
+) -> pd.DataFrame:
+    """Report validation sensitivity without selecting a preferred model."""
+    summaries = []
+
+    for window in windows:
+        if len(pnl.dropna()) <= window:
+            continue
+
+        for method in ["historical", "parametric"]:
+            result = rolling_var_forecasts(
+                pnl,
+                window=window,
+                confidence=confidence,
+                method=method,
+                mean_adjusted=mean_adjusted,
+            )
+            summaries.append(summarize_backtest(result, confidence))
+
+        for decay in decays:
+            result = rolling_var_forecasts(
+                pnl,
+                window=window,
+                confidence=confidence,
+                method="weighted_historical",
+                decay=decay,
+                mean_adjusted=mean_adjusted,
+            )
+            summaries.append(summarize_backtest(result, confidence))
+
+    if not summaries:
+        raise ValueError("No sensitivity specification had enough observations.")
+    return pd.concat(summaries, ignore_index=True)

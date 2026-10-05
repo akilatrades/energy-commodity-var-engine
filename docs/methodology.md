@@ -1,69 +1,48 @@
 # Methodology
 
-## Business interpretation
+## Objective
 
-The project simulates a simplified daily Market Risk process for a linear energy futures portfolio.
+The framework measures and validates daily market risk for a fixed linear energy futures portfolio.
 
-The workflow is:
+The process is deliberately separated into distinct control questions:
 
-```text
-Understand positions
-    -> calculate daily P&L history
-    -> measure VaR / ES
-    -> identify risk drivers
-    -> run stress scenarios
-    -> backtest VaR
-    -> compare risk with a limit
-    -> summarize findings for management
-```
+1. What positions are in the book?
+2. What daily P&L would those positions have produced?
+3. What do alternative VaR and Expected Shortfall methods report?
+4. Which positions contribute most to risk?
+5. How does the portfolio behave under severe market moves?
+6. Do VaR forecasts perform reasonably out of sample?
+7. How sensitive are validation results to key calibration choices?
+8. Is current risk within the configured limit?
 
-## P&L calculation
+## Portfolio P&L
 
-For a fixed futures position:
+For a fixed linear futures position:
 
-```text
-Daily P&L
-= contracts × contract multiplier × daily price change
-```
+Daily P&L = contracts × contract multiplier × daily price change.
 
-A long position has positive contracts. A short position has negative contracts.
+Position P&L is calculated independently by market and then aggregated to portfolio P&L.
 
-The current framework therefore models linear price risk rather than nonlinear option risk.
+The project uses direct settlement-price changes and contract multipliers for historical futures P&L.
 
-## Risk horizon and confidence
+## Risk horizon
 
-The main reporting convention is:
+The primary convention is 99% one-day VaR and Expected Shortfall.
 
-```text
-1-day horizon
-99% confidence
-```
+A VaR estimate is a model percentile, not a maximum possible loss.
 
-A 99% VaR is not a worst-case-loss estimate. It is a percentile threshold under the chosen method and data assumptions.
+## Model comparison
 
-## Risk models
+The project reports Historical, Parametric Normal, correlated Student-t Monte Carlo, and Weighted Historical estimates side by side.
 
-The repository compares:
-
-- Historical VaR / Expected Shortfall
-- Parametric normal VaR / Expected Shortfall
-- Monte Carlo normal VaR / Expected Shortfall
-- exponentially weighted historical VaR
-
-See `var_models.md`.
-
-## Attribution
-
-The project decomposes normal-theory portfolio VaR into component contributions using the covariance of each position's P&L with total portfolio P&L.
-
-See `attribution.md`.
+No single method is treated as automatically superior. Method selection should be supported by assumptions, observed behavior, validation, stress testing, and the intended use of the metric.
 
 ## Validation
 
-Rolling forecasts use only the data available before each test observation. Exceptions are then evaluated with coverage and independence diagnostics.
+Historical, Parametric, and Weighted Historical VaR are evaluated using rolling out-of-sample forecasts. The project reports unconditional coverage, exception independence, combined conditional coverage, and parameter sensitivity.
 
-See `backtesting.md`.
+See **model_validation.md**.
 
 ## Control layer
 
-An illustrative VaR limit is included to show that Market Risk is not only about calculating numbers. A risk measure also needs to be compared with approved limits and escalated when necessary.
+Current Historical VaR is compared with a configurable illustrative limit. Limit status is separate from model validation: a model can pass validation while the portfolio breaches a limit, and a portfolio can be within limit while the model itself requires review.

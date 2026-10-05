@@ -2,294 +2,128 @@
 
 [![tests](https://github.com/akilatrades/energy-commodity-var-engine/actions/workflows/tests.yml/badge.svg)](https://github.com/akilatrades/energy-commodity-var-engine/actions/workflows/tests.yml)
 
-Python-based market-risk framework for an illustrative energy futures portfolio. The project compares multiple Value at Risk (VaR) methods, calculates Expected Shortfall, attributes risk by position, runs stress scenarios, backtests model exceptions, and monitors an illustrative risk limit.
+Python market-risk framework for a linear energy futures portfolio. The project converts position-level market moves into daily P&L, compares multiple VaR methodologies, measures Expected Shortfall, attributes portfolio risk, runs hypothetical and historical stress tests, validates VaR forecasts out of sample, and monitors limit utilization.
 
-> **One-line summary:** build a daily market-risk view of an energy futures book and test whether the reported risk measures are reasonable, stable, and useful for decision-making.
+## Scope
 
-## 5-minute professional review
+The reference portfolio contains WTI crude oil, RBOB gasoline, heating oil, and Henry Hub natural gas futures.
 
-1. Read the **Business question** and **What the project measures** sections below.
-2. Open `outputs/executive_summary.md` after running the project for a management-style risk summary.
-3. Review `notebooks/01_portfolio_and_pnl.ipynb` for the beginner-friendly starting point.
-4. Review `docs/backtesting.md` and `docs/limitations.md` to see how model risk is handled.
-5. Inspect `src/` and `tests/` for reusable logic and automated validation.
+The analytical workflow is:
 
-**Skills demonstrated:** market risk, Value at Risk, Expected Shortfall, commodity futures, risk attribution, stress testing, limit monitoring, backtesting, Python, pandas, NumPy, SciPy, pytest, and GitHub Actions.
+~~~text
+Positions
+  -> Daily P&L
+  -> VaR / Expected Shortfall
+  -> Risk Attribution
+  -> Stress Testing
+  -> Model Validation
+  -> Limit Monitoring
+  -> Executive Risk Summary
+~~~
 
-## Business question
+The objective is not to maximize model complexity. It is to show a controlled, explainable Market Risk process in which the risk number, its drivers, the model assumptions, and the validation results can all be reviewed independently.
 
-A trading book can contain positions that gain and lose value for different reasons. A Market Risk team needs to answer questions such as:
+## Risk framework
 
-- How much can the portfolio lose on a bad day under the model assumptions?
-- Which positions are driving that risk?
-- Are some positions offsetting others?
-- How does the book behave under predefined stress scenarios?
-- Is the VaR model producing too many exceptions?
-- Are risk measures within approved limits?
-- Can the result be explained clearly to traders and senior management?
+| Area | Implementation |
+|---|---|
+| P&L | Linear futures P&L by position and total portfolio |
+| Historical risk | 99% Historical VaR and Expected Shortfall |
+| Parametric risk | Normal-theory VaR and Expected Shortfall |
+| Monte Carlo | Correlated Student-t risk-factor simulation |
+| Responsive history | Exponentially weighted Historical VaR |
+| Attribution | Parametric component VaR by position |
+| Stress | Configurable hypothetical shocks plus historical replay |
+| Validation | Rolling out-of-sample forecasts, Kupiec coverage, Christoffersen independence |
+| Sensitivity | Alternative lookback windows and decay factors |
+| Controls | Configurable VaR limit and utilization status |
+| Reporting | Management-style executive summary and reproducible CSV outputs |
 
-This repository builds a simplified framework around those questions.
+## Portfolio configuration
 
-## Illustrative portfolio
+Position assumptions are separated from calculation code in **config/portfolio.csv**.
 
-The default portfolio contains linear futures exposures to:
-
-| Symbol | Market | Example contract multiplier |
+| Symbol | Market | Contract multiplier |
 |---|---|---:|
-| `CL=F` | WTI crude oil | 1,000 bbl |
-| `RB=F` | RBOB gasoline | 42,000 gal |
-| `HO=F` | Heating oil | 42,000 gal |
-| `NG=F` | Henry Hub natural gas | 10,000 MMBtu |
+| CL=F | WTI crude oil | 1,000 bbl |
+| RB=F | RBOB gasoline | 42,000 gal |
+| HO=F | Heating oil | 42,000 gal |
+| NG=F | Henry Hub natural gas | 10,000 MMBtu |
 
-The positions are examples for analytics only. They are not trade recommendations.
+Hypothetical stress scenarios, model parameters, and risk limits are also stored under **config/** so they can be reviewed without changing Python source code.
 
-## What the project measures
+## Data
 
-### 1. Daily position and portfolio P&L
+Historical mode uses public Yahoo Finance continuous futures proxies. These are suitable for portfolio research and model demonstration, but they are not equivalent to a production trading firm's contract-level settlement data.
 
-For a linear futures position:
+The project explicitly treats them as **public continuous futures proxies**, not as an exchange-grade risk feed. Roll construction, exact contract mapping, independent price verification, and production market-data controls are outside the scope of this repository.
 
-```text
-Daily P&L
-= number of contracts
-× contract multiplier
-× daily price change
-```
-
-The project calculates P&L separately by position and then sums the positions into total portfolio P&L.
-
-### 2. Historical VaR
-
-Historical VaR uses the actual historical P&L distribution.
-
-At 99% confidence, the model asks:
-
-> What loss threshold was exceeded on roughly 1% of the historical observations?
-
-No normal-distribution assumption is required.
-
-### 3. Parametric VaR
-
-Parametric VaR assumes the P&L distribution can be approximated by a normal distribution using the estimated mean and standard deviation.
-
-It is simple and fast, but it can understate risk when returns have fat tails, volatility clustering, or other non-normal behavior.
-
-### 4. Monte Carlo VaR
-
-The project simulates many possible daily P&L observations from an estimated distribution and calculates the percentile loss from the simulated outcomes.
-
-The current implementation is deliberately simple: it uses a fitted normal P&L distribution. A production model could instead simulate risk factors, volatility dynamics, nonlinear instruments, and correlations directly.
-
-### 5. Expected Shortfall
-
-VaR identifies a loss threshold. Expected Shortfall asks:
-
-> If the loss is already worse than VaR, how large are those tail losses on average?
-
-This provides more information about the severity of extreme observations.
-
-### 6. Weighted historical VaR
-
-Plain historical VaR gives each historical observation equal probability.
-
-The project also includes an exponentially weighted historical method so that recent observations receive more weight than older observations.
-
-This is useful for demonstrating why a risk analyst may want a model to react faster when volatility changes.
-
-### 7. Component VaR / risk attribution
-
-A portfolio-level VaR number is not enough for management.
-
-The project estimates each position's contribution to parametric VaR and identifies whether a position:
-
-- contributes positively to total risk, or
-- provides diversification and reduces total portfolio risk.
-
-### 8. Stress testing
-
-The framework applies deterministic scenarios such as:
-
-- broad energy selloff,
-- crude rally with refined products lagging,
-- refined-products squeeze,
-- natural-gas shock.
-
-Stress tests answer a different question from VaR: they show what happens under specific moves rather than relying on a percentile of historical/modelled behavior.
-
-### 9. VaR backtesting
-
-The project estimates VaR using only prior observations and compares the next realized P&L against the forecast.
-
-It records a **VaR exception** when:
-
-```text
-Realized P&L < -VaR
-```
-
-The backtesting layer includes:
-
-- exception counts,
-- actual versus expected exception rate,
-- Kupiec unconditional-coverage test,
-- Christoffersen exception-independence test.
-
-### 10. Risk-limit monitoring
-
-The project compares the current VaR result with an illustrative limit and reports:
-
-- current risk value,
-- limit,
-- utilization percentage,
-- `OK`, `WATCH`, or `BREACH` status.
-
-This demonstrates the control side of Market Risk in addition to model calculation.
-
-## Architecture
-
-```text
-Market prices
-    |
-    v
-Illustrative futures positions
-    |
-    v
-Daily position P&L
-    |
-    +--> Historical VaR / ES
-    +--> Parametric VaR / ES
-    +--> Monte Carlo VaR / ES
-    +--> Weighted historical VaR
-    |
-    +--> Component VaR attribution
-    +--> Stress scenarios
-    +--> Rolling VaR backtest
-    +--> Kupiec / Christoffersen tests
-    +--> Risk-limit utilization
-    |
-    v
-Management-style executive summary
-```
+Demo mode generates deterministic synthetic data for offline reproducibility and CI smoke testing. Synthetic results are not presented as historical findings.
 
 ## Repository structure
 
-```text
+~~~text
 .
-├── README.md
-├── CHANGELOG.md
-├── LICENSE
-├── pyproject.toml
-├── requirements.txt
-├── run_analysis.py
-├── src/
-│   ├── data.py
-│   ├── portfolio.py
-│   ├── var_models.py
-│   ├── attribution.py
-│   ├── stress.py
-│   ├── backtesting.py
-│   ├── limits.py
-│   └── reporting.py
-├── docs/
-│   ├── methodology.md
-│   ├── var_models.md
-│   ├── attribution.md
-│   ├── stress_testing.md
-│   ├── backtesting.md
-│   ├── limits.md
-│   ├── limitations.md
-│   ├── data_dictionary.md
-│   └── glossary.md
+├── config/
+│   ├── model_config.json
+│   ├── portfolio.csv
+│   ├── risk_limits.json
+│   └── stress_scenarios.csv
 ├── data/
+├── docs/
 ├── notebooks/
 ├── outputs/
-└── tests/
-```
+├── src/
+│   ├── attribution.py
+│   ├── backtesting.py
+│   ├── data.py
+│   ├── limits.py
+│   ├── portfolio.py
+│   ├── reporting.py
+│   ├── stress.py
+│   └── var_models.py
+├── tests/
+├── run_analysis.py
+├── pyproject.toml
+└── requirements.txt
+~~~
 
-## Quick start
+## Reproduce the analysis
 
-```bash
+~~~bash
 python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 pytest
-python run_analysis.py --mode demo
-```
-
-### Demo mode
-
-`--mode demo` uses a deterministic synthetic energy dataset so the full workflow can run offline.
-
-Every result generated from demo mode must be treated as **synthetic demonstration output**, not historical market evidence.
-
-### Live mode
-
-```bash
 python run_analysis.py --mode live
-```
+~~~
 
-Live mode attempts to download public continuous futures proxies from Yahoo Finance.
+Windows activation:
 
-Public continuous series are useful for portfolio research, but they are not equivalent to the market data, contract mappings, curves, and valuation systems used by a production Market Risk function.
+~~~text
+.venv\Scripts\activate
+~~~
 
-## Generated outputs
+For an offline deterministic smoke test:
 
-The analysis writes:
+~~~bash
+python run_analysis.py --mode demo
+~~~
 
-- `portfolio_positions.csv`
-- `daily_position_pnl.csv`
-- `var_method_comparison.csv`
-- `component_var.csv`
-- `stress_scenarios.csv`
-- `historical_var_backtest.csv`
-- `backtest_summary.csv`
-- `limit_monitoring.csv`
-- `portfolio_pnl_history.svg`
-- `var_backtest.svg`
-- `component_var.svg`
-- `executive_summary.md`
+Generated results are written to **outputs/** and include method comparison, component VaR, hypothetical and historical stress results, model-validation summaries, calibration sensitivity, limit utilization, charts, metadata, and an executive summary.
 
-See `outputs/README.md` for the reporting layer.
+## Model validation
 
-## Model governance philosophy
+The project does not treat a VaR estimate as valid simply because the formula runs.
 
-A calculated VaR number is not automatically a good risk measure.
+Historical, Parametric, and Weighted Historical VaR are evaluated using rolling out-of-sample forecasts. Validation reports exception counts, expected versus realized exception rates, Kupiec unconditional coverage, Christoffersen independence, and conditional coverage. A separate sensitivity table shows how results change across reasonable lookback windows and decay factors without automatically selecting whichever specification produces the most favorable backtest.
 
-The project therefore separates four questions:
+## Governance and limitations
 
-1. **Measurement** — what does each model say the risk is?
-2. **Attribution** — which positions are creating or reducing the risk?
-3. **Validation** — does the model produce a reasonable exception pattern?
-4. **Control** — is the reported risk within an illustrative approved limit?
+This repository is an analytical portfolio project, not a production Market Risk platform.
 
-That separation is intentional because Market Risk is not only a modeling function; it also requires independent review, escalation, and clear communication.
+Important exclusions include nonlinear options and Greeks, intraday position changes, official exchange settlement feeds, independent market-data verification, exact futures roll mapping, liquidity and concentration add-ons, margin and funding, P&L explain, counterparty credit risk, formal model approval, and production trading-system integration.
 
-## Important limitations
-
-This is a portfolio and learning project, not a bank production risk engine.
-
-The current model simplifies or excludes:
-
-- nonlinear options and Greeks,
-- intraday risk,
-- exact exchange contract rolls,
-- independent market-data verification,
-- FX conversion across currencies,
-- liquidity and concentration add-ons,
-- credit and counterparty risk,
-- initial/variation margin,
-- P&L explain,
-- new-product approval,
-- full model-governance controls,
-- production ETRM / trading-system integration.
-
-See `docs/limitations.md` for the full discussion.
-
-## Why this project exists
-
-The goal is not to produce the most complicated VaR model possible.
-
-The goal is to demonstrate a clear Market Risk workflow:
-
-> understand the positions, calculate the risk, explain the drivers, stress the book, test the model, monitor the limit, and communicate the result.
+See **docs/limitations.md** for the full model-use boundary and **docs/model_validation.md** for the validation framework.
 
 Educational and portfolio use only. Not investment advice.

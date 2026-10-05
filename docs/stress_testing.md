@@ -1,35 +1,27 @@
 # Stress Testing
 
-## Why stress testing is different from VaR
+## Hypothetical scenarios
 
-VaR is a percentile-based model result.
+Hypothetical percentage shocks are stored in **config/stress_scenarios.csv** rather than hard-coded in the calculation engine.
 
-Stress testing asks a direct scenario question:
+The default set includes a broad energy selloff, crude rally with products lagging, refined-products squeeze, and natural-gas shock.
 
-> What would the portfolio P&L be if specified markets moved by specified amounts?
+Each scenario is translated through current linear futures sensitivities into position and total portfolio P&L.
 
-The two tools answer different questions and should complement each other.
+## Historical replay
 
-## Default scenarios
+Historical replay identifies the worst observed fixed-book P&L days in the analyzed sample and reports the market moves that occurred on those dates.
 
-The project includes illustrative scenarios:
+This provides an empirical complement to hypothetical scenarios.
 
-- broad energy selloff,
-- crude rally / products lag,
-- refined-products squeeze,
-- natural-gas shock.
+## Interpretation
 
-Each shock is applied to the latest price and translated into position P&L using the futures contract multiplier and contract count.
+VaR and stress testing answer different questions.
 
-## Production use
+VaR is a percentile-based model estimate. Stress testing evaluates explicitly defined or historically observed market moves.
 
-A professional stress program would include:
+Neither should be treated as a substitute for the other.
 
-- historically observed scenarios,
-- hypothetical scenarios,
-- desk-specific concentrations,
-- cross-market dislocations,
-- liquidity stresses,
-- basis and curve shocks,
-- options volatility shocks,
-- reverse stress testing.
+## Production extensions
+
+A production stress framework could add liquidity stresses, basis and calendar-spread shocks, options volatility shocks, concentration scenarios, reverse stress testing, desk-specific historical episodes, and governance around scenario approval and review.

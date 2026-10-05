@@ -1,53 +1,21 @@
-# Generated Results
+# Analysis Outputs
+
+The outputs directory is reserved for generated analytical results. Generated CSV, SVG, JSON, and executive-summary files are intentionally ignored by Git so the repository does not present synthetic results as historical findings.
 
 Run:
 
-```bash
-python run_analysis.py --mode demo
-```
-
-or:
-
-```bash
+~~~bash
 python run_analysis.py --mode live
-```
+~~~
 
-The project writes the following reporting layer.
+to generate a historical public-proxy analysis, or:
 
-## Portfolio
+~~~bash
+python run_analysis.py --mode demo
+~~~
 
-- `portfolio_positions.csv` — position definitions.
-- `daily_position_pnl.csv` — daily P&L by position and total portfolio.
+to validate the pipeline with deterministic synthetic data.
 
-## VaR / Expected Shortfall
+The analysis produces portfolio positions, daily position P&L, VaR method comparison, component VaR, hypothetical and historical stress results, model-validation summaries, calibration sensitivity, limit monitoring, analysis metadata, charts, and an executive summary.
 
-- `var_method_comparison.csv` — Historical, Parametric, Monte Carlo, and weighted historical VaR comparison.
-
-## Risk attribution
-
-- `component_var.csv` — parametric component VaR by position, including diversification flags.
-
-## Stress testing
-
-- `stress_scenarios.csv` — position and total P&L under deterministic shocks.
-
-## Backtesting
-
-- `historical_var_backtest.csv` — daily rolling historical VaR forecasts, realized P&L, and exception flags.
-- `backtest_summary.csv` — Kupiec coverage and Christoffersen independence diagnostics.
-
-## Limits
-
-- `limit_monitoring.csv` — illustrative VaR limit, utilization, and status.
-
-## Management summary
-
-- `executive_summary.md` — concise senior-management style risk summary.
-
-## Charts
-
-- `portfolio_pnl_history.svg`
-- `var_backtest.svg`
-- `component_var.svg`
-
-If the project was run in demo mode, all generated outputs are synthetic demonstration results and should be labeled accordingly.
+The executive summary includes the as-of date and explicitly identifies whether the analysis used public continuous futures proxies or synthetic demo data.
