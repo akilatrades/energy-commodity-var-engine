@@ -25,6 +25,14 @@ Position P&L is calculated independently by market and then aggregated to portfo
 
 The project uses direct settlement-price changes and contract multipliers for historical futures P&L.
 
+## Current risk window
+
+Current VaR, Expected Shortfall, Monte Carlo calibration, and component VaR use the most recent configurable risk window, set to 250 daily P&L observations by default.
+
+The longer history is retained for rolling validation, calibration sensitivity, and historical stress replay.
+
+This separation avoids using the entire available history as the current volatility estimate while still preserving a broader sample for model review.
+
 ## Risk horizon
 
 The primary convention is 99% one-day VaR and Expected Shortfall.

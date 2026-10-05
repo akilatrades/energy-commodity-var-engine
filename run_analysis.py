@@ -123,9 +123,17 @@ def main() -> None:
     pnl.index.name = "date"
     pnl.to_csv(output / "daily_position_pnl.csv")
 
+    risk_window = int(model["current_risk_window"])
+    if len(pnl) < risk_window:
+        raise ValueError(
+            f"Current risk window requires {risk_window} P&L observations; got {len(pnl)}."
+        )
+    current_pnl = pnl.iloc[-risk_window:]
+    current_prices = prices.iloc[-(risk_window + 1):]
+
     var_summary = summarize_var_methods(
-        pnl["portfolio_pnl"],
-        prices=prices,
+        current_pnl["portfolio_pnl"],
+        prices=current_prices,
         positions=positions,
         confidence=model["confidence"],
         decay=model["weighted_decay"],
@@ -135,7 +143,7 @@ def main() -> None:
     )
     var_summary.to_csv(output / "var_method_comparison.csv", index=False)
 
-    component = component_var(pnl, confidence=model["confidence"])
+    component = component_var(current_pnl, confidence=model["confidence"])
     component.to_csv(output / "component_var.csv", index=False)
 
     hypothetical = run_hypothetical_scenarios(
@@ -199,6 +207,7 @@ def main() -> None:
         "observations": int(len(prices)),
         "symbols": [p.symbol for p in positions],
         "confidence": model["confidence"],
+        "current_risk_window": risk_window,
         "backtest_window": model["backtest_window"],
     }
     (output / "analysis_metadata.json").write_text(

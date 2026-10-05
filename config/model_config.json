@@ -1,6 +1,7 @@
 {
   "confidence": 0.99,
   "historical_start": "2018-01-01",
+  "current_risk_window": 250,
   "backtest_window": 250,
   "backtest_methods": [
     "historical",
