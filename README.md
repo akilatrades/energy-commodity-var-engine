@@ -4,6 +4,25 @@
 
 Python market-risk framework for a linear energy futures portfolio. The project converts position-level market moves into daily P&L, compares multiple VaR methodologies, measures Expected Shortfall, attributes portfolio risk, runs hypothetical and historical stress tests, validates VaR forecasts out of sample, and monitors limit utilization.
 
+## Current results / repository status
+
+The project is currently configured around an illustrative energy futures portfolio with **40 CL**, **-15 RB**, **-12 HO**, and **35 NG** contracts.
+
+| Item | Current configuration / result |
+|---|---|
+| Risk horizon | 1 trading day |
+| Confidence level | 99% |
+| Current risk window | 250 observations |
+| Monte Carlo | 50,000 correlated Student-t simulations, 6 degrees of freedom |
+| Weighted Historical decay | 0.97 |
+| VaR limit | $500,000 |
+| Validation | Rolling out-of-sample Historical, Parametric, and Weighted Historical VaR with Kupiec and Christoffersen tests |
+| Stress framework | Broad energy selloff, crude rally/products lag, refined-products squeeze, and natural-gas shock |
+
+The repository currently validates the **full analytical pipeline**—position P&L, VaR / Expected Shortfall, attribution, stress testing, backtesting, calibration sensitivity, limit monitoring, and executive reporting.
+
+A static live historical risk snapshot is **not committed to the repository by design**. Generated live and demo outputs are ignored so synthetic results are never presented as historical findings and time-sensitive public-proxy results are not mistaken for a permanent risk statement. Running `python run_analysis.py --mode live` generates the current public-proxy results locally.
+
 ## Scope
 
 The reference portfolio contains WTI crude oil, RBOB gasoline, heating oil, and Henry Hub natural gas futures.
