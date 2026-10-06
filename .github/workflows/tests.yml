@@ -1,4 +1,6 @@
-name: tests
+name: CI
+
+run-name: Energy Commodity VaR - CI
 
 on:
   push:
