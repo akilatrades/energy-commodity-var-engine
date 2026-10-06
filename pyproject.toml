@@ -1,6 +1,6 @@
 [project]
 name = "energy-commodity-var-engine"
-version = "0.2.0"
+version = "1.0.0"
 description = "Energy futures market-risk analytics with VaR, Expected Shortfall, stress testing, attribution, and model validation"
 requires-python = ">=3.11"
 license = {text = "MIT"}
