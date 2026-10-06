@@ -4,7 +4,7 @@
 
 Python market-risk framework for a linear energy futures portfolio. The project converts position-level market moves into daily P&L, compares multiple VaR methodologies, measures Expected Shortfall, attributes portfolio risk, runs hypothetical and historical stress tests, validates VaR forecasts out of sample, and monitors limit utilization.
 
-> **Project status:** Version 1.0 is complete. The core analytical scope is frozen as a stable release; future changes will focus on maintenance, data refreshes, or targeted extensions when they add clear value.
+> **Status:** v1.0 complete.
 
 ## Current results / repository status
 
@@ -154,6 +154,14 @@ Generated results are written to **outputs/** and include method comparison, com
 The project does not treat a VaR estimate as valid simply because the formula runs.
 
 Historical, Parametric, and Weighted Historical VaR are evaluated using rolling out-of-sample forecasts. Validation reports exception counts, expected versus realized exception rates, Kupiec unconditional coverage, Christoffersen independence, and conditional coverage. A separate sensitivity table shows how results change across reasonable lookback windows and decay factors without automatically selecting whichever specification produces the most favorable backtest.
+
+## Future improvements
+
+Potential next steps include:
+
+- options and nonlinear risk using Greeks,
+- exact contract-level market data and roll mapping,
+- liquidity, concentration, margin, and funding risk extensions.
 
 ## Governance and limitations
 
