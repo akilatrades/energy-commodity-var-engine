@@ -6,22 +6,38 @@ Python market-risk framework for a linear energy futures portfolio. The project 
 
 ## Current results / repository status
 
-The project is currently configured around an illustrative energy futures portfolio with **40 CL**, **-15 RB**, **-12 HO**, and **35 NG** contracts.
+The project currently uses an example portfolio of energy futures:
 
-| Item | Current configuration / result |
-|---|---|
-| Risk horizon | 1 trading day |
-| Confidence level | 99% |
-| Current risk window | 250 observations |
-| Monte Carlo | 50,000 correlated Student-t simulations, 6 degrees of freedom |
-| Weighted Historical decay | 0.97 |
-| VaR limit | $500,000 |
-| Validation | Rolling out-of-sample Historical, Parametric, and Weighted Historical VaR with Kupiec and Christoffersen tests |
-| Stress framework | Broad energy selloff, crude rally/products lag, refined-products squeeze, and natural-gas shock |
+- **40 WTI crude oil contracts**
+- **short 15 RBOB gasoline contracts**
+- **short 12 heating-oil contracts**
+- **35 Henry Hub natural-gas contracts**
 
-The repository currently validates the **full analytical pipeline**—position P&L, VaR / Expected Shortfall, attribution, stress testing, backtesting, calibration sensitivity, limit monitoring, and executive reporting.
+"Short" means the example portfolio benefits when that futures price falls and loses when it rises.
 
-A static live historical risk snapshot is **not committed to the repository by design**. Generated live and demo outputs are ignored so synthetic results are never presented as historical findings and time-sensitive public-proxy results are not mistaken for a permanent risk statement. Running `python run_analysis.py --mode live` generates the current public-proxy results locally.
+| Setting | Plain-English meaning | Current value |
+|---|---|---:|
+| Risk horizon | How far ahead the model measures risk | 1 trading day |
+| Confidence level | The model focuses on losses expected to be exceeded only about 1% of the time | 99% |
+| Historical window | Number of recent market observations used for the main risk estimate | 250 |
+| Monte Carlo simulation | Number of simulated market scenarios used in one of the risk models | 50,000 |
+| Weighted-history setting | Gives more importance to recent market moves than older ones | 0.97 decay |
+| VaR limit | Example maximum one-day risk limit used by the project | $500,000 |
+
+### What the project currently does
+
+The pipeline can calculate daily portfolio profit and loss, estimate **Value at Risk (VaR)**, estimate **Expected Shortfall**, show which positions contribute most to risk, run severe market scenarios, test whether the VaR model performed reasonably on past data, and compare the result with a predefined risk limit.
+
+In simple terms:
+
+- **VaR** asks: "How large could a bad one-day loss be under normal model assumptions?"
+- **Expected Shortfall** asks: "If losses are worse than the VaR threshold, how large are those bad losses on average?"
+- **Stress testing** asks: "What happens if markets move sharply in a specific scenario?"
+- **Backtesting** checks whether the model's past risk forecasts matched what actually happened often enough.
+
+The project tests four example stress scenarios: a broad energy selloff, a crude-oil rally where refined products lag, a refined-products price squeeze, and a natural-gas price shock.
+
+A fixed live historical risk number is **not saved in the repository on purpose**. Live results change as market data changes, and the project also has a synthetic demo mode. Keeping generated results out of GitHub prevents a demo number from being mistaken for a real historical result. Running `python run_analysis.py --mode live` creates the latest public-data version locally.
 
 ## Scope
 
