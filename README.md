@@ -86,3 +86,5 @@ I would obtain dated settlement panels before claiming a historical improvement 
 The live book still uses Yahoo continuous proxies; the new roll adjustment has **not** been applied to them. The option module is a standalone WTI producer example, not part of the refiner’s default linear risk total. Its volatility is fixed unless explicitly stressed; it excludes volatility smile, American exercise, average-price settlement, liquidity, margin and counterparty risk. Black-76 rejects nonpositive forwards.
 
 [Model limitations](docs/limitations.md) · [Validation](docs/model_validation.md). Public or synthetic portfolio research only; no employer or client data.
+
+[Real dated-contract audit and reconciliation](docs/continuous_series.md): available long-dated CL/RB/HO quotes now exercise the roll builder over 250 observed P&L intervals. Yahoo did not provide sufficient expired-contract coverage to reconstruct the original front-month book.

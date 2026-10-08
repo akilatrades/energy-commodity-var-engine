@@ -37,3 +37,8 @@ jobs:
         run: |
           python run_option_risk.py --output-dir /tmp/option-risk-demo
           python run_roll_analysis.py --settlements examples/roll_fixture/settlements.csv --schedule examples/roll_fixture/schedule.csv --data-label "SYNTHETIC contract fixture" --output-dir /tmp/roll-demo
+
+      - name: Reproduce saved-data diagnosis and real-contract reconciliation
+        run: |
+          python run_diagnostics.py
+          python run_real_contract_roll.py
