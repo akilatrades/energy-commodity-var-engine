@@ -1,0 +1,35 @@
+name: Remove unused imports and sort imports
+on:
+  workflow_dispatch:
+  push:
+    branches: [import-cleanup-october]
+    paths: ['.github/workflows/import-cleanup.yml']
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff==0.11.13
+      - run: ruff check --select F401,I --fix .
+      - run: ruff format .
+      - run: ruff check --select F401,I .
+      - run: pip install -r requirements.txt pytest
+      - name: Verify import cleanup
+        run: |
+          python -m pytest
+          python run_analysis.py --mode demo --output-dir /tmp/risk-smoke
+          python run_diagnostics.py --output-dir /tmp/risk-diagnosis
+          python run_real_contract_roll.py
+      - name: Commit only Python import and formatting changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u -- '*.py' '*.ipynb'
+          git diff --cached --quiet || git commit -m "Remove unused imports and put imports in consistent order"
+          git push
