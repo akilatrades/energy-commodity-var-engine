@@ -1,45 +1,8 @@
-# Model Limitations and Use Boundary
+# Limitations
 
-This repository is an analytical Market Risk portfolio project, not a production risk platform.
-
-## Instruments
-
-The default refiner hedge book contains linear futures. A separate one-factor WTI option case study now supports European Black-76 full revaluation.
-
-The option case study excludes volatility surfaces, American exercise, average-price settlement and path-dependent derivatives. It is not combined with the default refiner book.
-
-## Market data
-
-Historical mode uses public continuous futures proxies.
-
-A production implementation would require exact instrument identifiers, official or independently validated settlement prices, contract calendars, explicit roll logic, timestamp controls, stale-price checks, and governed market-data lineage.
-
-Continuous futures construction can introduce roll-related price changes that influence calculated P&L and VaR. The new contract-panel roll builder is tested on a synthetic fixture; it does not correct the Yahoo proxy used in the live sample. See continuous_series.md.
-
-## VaR
-
-Historical VaR is sample dependent and cannot represent events absent from the historical window.
-
-Parametric Normal VaR can understate fat-tail behavior.
-
-Student-t Monte Carlo still depends on estimated covariance, a chosen degrees-of-freedom parameter, fixed linear sensitivities, and a stationary-distribution assumption.
-
-Weighted Historical VaR adds a decay parameter that introduces additional calibration risk.
-
-No VaR method is a maximum-loss estimate.
-
-## Portfolio assumptions
-
-The analysis holds contract counts fixed across the historical P&L sample. It therefore measures the historical behavior of today's illustrative position structure rather than reconstructing an actual evolving trading book.
-
-The project does not include intraday position changes, FX translation, transaction costs, liquidity add-ons, concentration add-ons, initial or variation margin, funding, or counterparty credit risk.
-
-## Validation
-
-Backtest results are sample dependent. At 99% confidence, exceptions are intentionally rare, which limits statistical power in short samples.
-
-The project does not optimize parameters solely to improve p-values.
-
-## Production-control gap
-
-A production Market Risk environment would additionally require trade-capture controls, independent valuations, risk-factor mapping, sensitivity validation, P&L explain, formal limit governance, model approval, change management, access control, audit trails, business continuity, and integration with front-office and risk systems.
+- **Contract exposure:** The default book uses Yahoo continuous proxies. The roll builder now reconciles both synthetic fixtures and observed long-dated CL/RB/HO closes, but missing expired-contract history prevents correcting the original front-month sample. April 20, 2020 illustrates the resulting mismatch with an earlier-roll hedge policy. Vendor closes also need independent settlement and timestamp validation.
+- **Validation:** FHS passes unconditional coverage at 5% on the common sample but fails independence and joint coverage. Calendar flags do not establish roll causation. The 2024-onward segment has already been inspected; it is a retrospective stability check, not an untouched holdout. Parameters are reported as fixed sensitivities rather than selected for favorable p-values.
+- **Risk estimates:** VaR is a quantile, not a maximum loss. Historical tails depend on observed shocks; Normal and Student-t models depend on distribution and covariance assumptions. Weighted history and FHS introduce decay choices. FHS scales fixed-book portfolio P&L with a zero-mean EWMA filter rather than modeling each factor's volatility and correlations separately.
+- **Business exposure:** Fixed contract counts describe a financial hedge, not total refinery profit or an actual evolving trading book. Physical yields, quality, location, timing and operating costs are outside the book, as are intraday trades, execution costs, margin, liquidity, funding, FX and counterparty risk. The illustrative limit is separate from model validation.
+- **Options:** The standalone producer case uses European terminal-settled Black-76 options with positive forwards and fixed volatility unless stressed. It excludes smiles, American exercise and averaging, and is separate from the default refiner risk total. Offline fixtures are labeled synthetic.
+- **Use and controls:** Saved results are dated research snapshots using public or synthetic inputs, with no employer or client data. Operational use would require governed market data, trade capture, independent valuation, approvals, limits and audit controls.
