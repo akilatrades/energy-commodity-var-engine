@@ -1,0 +1,49 @@
+root,ticker,observations,first,last,error
+CL,CLH25.NYM,0,,,YFTzMissingError: $CLH25.NYM: possibly delisted; no timezone found
+CL,CLJ25.NYM,0,,,YFTzMissingError: $CLJ25.NYM: possibly delisted; no timezone found
+CL,CLK25.NYM,0,,,YFTzMissingError: $CLK25.NYM: possibly delisted; no timezone found
+CL,CLM25.NYM,0,,,YFTzMissingError: $CLM25.NYM: possibly delisted; no timezone found
+CL,CLN25.NYM,0,,,YFTzMissingError: $CLN25.NYM: possibly delisted; no timezone found
+CL,CLQ25.NYM,0,,,YFTzMissingError: $CLQ25.NYM: possibly delisted; no timezone found
+CL,CLU25.NYM,0,,,YFTzMissingError: $CLU25.NYM: possibly delisted; no timezone found
+CL,CLV25.NYM,0,,,YFTzMissingError: $CLV25.NYM: possibly delisted; no timezone found
+CL,CLX25.NYM,0,,,YFTzMissingError: $CLX25.NYM: possibly delisted; no timezone found
+CL,CLZ25.NYM,0,,,YFTzMissingError: $CLZ25.NYM: possibly delisted; no timezone found
+CL,CLF26.NYM,0,,,YFTzMissingError: $CLF26.NYM: possibly delisted; no timezone found
+CL,CLG26.NYM,0,,,YFTzMissingError: $CLG26.NYM: possibly delisted; no timezone found
+CL,CLX26.NYM,464,2024-12-02,2026-10-07,
+CL,CLZ26.NYM,465,2024-12-02,2026-10-07,
+CL,CLF27.NYM,464,2024-12-02,2026-10-07,
+CL,CLG27.NYM,464,2024-12-02,2026-10-07,
+RB,RBH25.NYM,0,,,YFTzMissingError: $RBH25.NYM: possibly delisted; no timezone found
+RB,RBJ25.NYM,0,,,YFTzMissingError: $RBJ25.NYM: possibly delisted; no timezone found
+RB,RBK25.NYM,0,,,YFTzMissingError: $RBK25.NYM: possibly delisted; no timezone found
+RB,RBM25.NYM,0,,,YFTzMissingError: $RBM25.NYM: possibly delisted; no timezone found
+RB,RBN25.NYM,0,,,YFTzMissingError: $RBN25.NYM: possibly delisted; no timezone found
+RB,RBQ25.NYM,0,,,YFTzMissingError: $RBQ25.NYM: possibly delisted; no timezone found
+RB,RBU25.NYM,0,,,YFTzMissingError: $RBU25.NYM: possibly delisted; no timezone found
+RB,RBV25.NYM,0,,,YFTzMissingError: $RBV25.NYM: possibly delisted; no timezone found
+RB,RBX25.NYM,0,,,YFTzMissingError: $RBX25.NYM: possibly delisted; no timezone found
+RB,RBZ25.NYM,0,,,YFTzMissingError: $RBZ25.NYM: possibly delisted; no timezone found
+RB,RBF26.NYM,0,,,YFTzMissingError: $RBF26.NYM: possibly delisted; no timezone found
+RB,RBG26.NYM,0,,,YFTzMissingError: $RBG26.NYM: possibly delisted; no timezone found
+RB,RBX26.NYM,464,2024-12-02,2026-10-07,
+RB,RBZ26.NYM,464,2024-12-02,2026-10-07,
+RB,RBF27.NYM,464,2024-12-02,2026-10-07,
+RB,RBG27.NYM,464,2024-12-02,2026-10-07,
+HO,HOH25.NYM,0,,,YFTzMissingError: $HOH25.NYM: possibly delisted; no timezone found
+HO,HOJ25.NYM,0,,,YFTzMissingError: $HOJ25.NYM: possibly delisted; no timezone found
+HO,HOK25.NYM,0,,,YFTzMissingError: $HOK25.NYM: possibly delisted; no timezone found
+HO,HOM25.NYM,0,,,YFTzMissingError: $HOM25.NYM: possibly delisted; no timezone found
+HO,HON25.NYM,144,2024-12-02,2025-06-30,
+HO,HOQ25.NYM,0,,,YFTzMissingError: $HOQ25.NYM: possibly delisted; no timezone found
+HO,HOU25.NYM,0,,,YFTzMissingError: $HOU25.NYM: possibly delisted; no timezone found
+HO,HOV25.NYM,0,,,YFTzMissingError: $HOV25.NYM: possibly delisted; no timezone found
+HO,HOX25.NYM,0,,,YFTzMissingError: $HOX25.NYM: possibly delisted; no timezone found
+HO,HOZ25.NYM,0,,,YFTzMissingError: $HOZ25.NYM: possibly delisted; no timezone found
+HO,HOF26.NYM,0,,,YFTzMissingError: $HOF26.NYM: possibly delisted; no timezone found
+HO,HOG26.NYM,0,,,YFTzMissingError: $HOG26.NYM: possibly delisted; no timezone found
+HO,HOX26.NYM,464,2024-12-02,2026-10-07,
+HO,HOZ26.NYM,465,2024-12-02,2026-10-07,
+HO,HOF27.NYM,464,2024-12-02,2026-10-07,
+HO,HOG27.NYM,464,2024-12-02,2026-10-07,

@@ -157,9 +157,7 @@ def summarize_backtest(
     christ = christoffersen_independence_test(results["exception"])
     conditional_lr = kupiec["lr_pof"] + christ["lr_independence"]
     conditional_p = (
-        0.0
-        if math.isinf(conditional_lr)
-        else float(1 - chi2.cdf(conditional_lr, df=2))
+        0.0 if math.isinf(conditional_lr) else float(1 - chi2.cdf(conditional_lr, df=2))
     )
 
     row = {

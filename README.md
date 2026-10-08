@@ -6,6 +6,10 @@ How much can a refiner’s financial hedge lose in one day, and do the risk mode
 
 The first point to get right is the book’s direction: a refiner buys crude and sells products, so the financial margin hedge is **long crude and short products**. A loss on that hedge can offset a gain in the physical margin. This engine reports the financial hedge book; it does not call a hedge loss a loss for the entire refinery.
 
+## Backtest follow-up
+
+[The diagnosis](docs/backtest_diagnosis.md) reproduces the failure and tests a past-only EWMA filtered historical simulation. On **matching forecast dates**, exceptions fall from **2.16% to 1.43%** with a fixed 0.94 decay. Full-sample independence still fails. Excluding possible month-turn rolls from training makes coverage worse; no realized losses are removed. This is a documented improvement with an unresolved limitation, not a clean validation pass.
+
 ## The book
 
 | Position | Contracts | Physical units |
@@ -82,3 +86,5 @@ I would obtain dated settlement panels before claiming a historical improvement 
 The live book still uses Yahoo continuous proxies; the new roll adjustment has **not** been applied to them. The option module is a standalone WTI producer example, not part of the refiner’s default linear risk total. Its volatility is fixed unless explicitly stressed; it excludes volatility smile, American exercise, average-price settlement, liquidity, margin and counterparty risk. Black-76 rejects nonpositive forwards.
 
 [Model limitations](docs/limitations.md) · [Validation](docs/model_validation.md). Public or synthetic portfolio research only; no employer or client data.
+
+[Real dated-contract audit and reconciliation](docs/continuous_series.md): available long-dated CL/RB/HO quotes now exercise the roll builder over 250 observed P&L intervals. Yahoo did not provide sufficient expired-contract coverage to reconstruct the original front-month book.

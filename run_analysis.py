@@ -14,9 +14,18 @@ import pandas as pd
 
 from src.attribution import component_var
 from src.backtesting import calibration_sensitivity, compare_backtests
-from src.data import download_yahoo_prices, make_demo_prices, save_price_snapshot, validate_price_history
+from src.data import (
+    download_yahoo_prices,
+    make_demo_prices,
+    save_price_snapshot,
+    validate_price_history,
+)
 from src.limits import limit_status, load_risk_limits
-from src.portfolio import load_positions_csv, pnl_history_from_prices, positions_to_frame
+from src.portfolio import (
+    load_positions_csv,
+    pnl_history_from_prices,
+    positions_to_frame,
+)
 from src.reporting import write_executive_summary
 from src.stress import (
     historical_replay_scenarios,
@@ -97,7 +106,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["demo", "live", "snapshot"], required=True)
     parser.add_argument("--output-dir", default="outputs")
-    parser.add_argument("--prices", help="Previously saved public prices CSV for snapshot mode")
+    parser.add_argument(
+        "--prices", help="Previously saved public prices CSV for snapshot mode"
+    )
     parser.add_argument("--end", help="Exclusive live download end date (YYYY-MM-DD)")
     args = parser.parse_args()
 
@@ -146,7 +157,7 @@ def main() -> None:
             f"Current risk window requires {risk_window} P&L observations; got {len(pnl)}."
         )
     current_pnl = pnl.iloc[-risk_window:]
-    current_prices = prices.iloc[-(risk_window + 1):]
+    current_prices = prices.iloc[-(risk_window + 1) :]
 
     var_summary = summarize_var_methods(
         current_pnl["portfolio_pnl"],
@@ -205,9 +216,7 @@ def main() -> None:
         limit=float(limits["var_99_1d_usd"]),
         watch_threshold=float(limits["watch_utilization"]),
     )
-    pd.DataFrame([limit_result]).to_csv(
-        output / "limit_monitoring.csv", index=False
-    )
+    pd.DataFrame([limit_result]).to_csv(output / "limit_monitoring.csv", index=False)
 
     make_charts(output, pnl, forecasts, component)
 
@@ -226,7 +235,9 @@ def main() -> None:
         "confidence": model["confidence"],
         "current_risk_window": risk_window,
         "backtest_window": model["backtest_window"],
-        "input_prices_sha256": hashlib.sha256((output / "input_prices.csv").read_bytes()).hexdigest(),
+        "input_prices_sha256": hashlib.sha256(
+            (output / "input_prices.csv").read_bytes()
+        ).hexdigest(),
         "requested_end_exclusive": args.end,
         "portfolio_thesis": "Refiner 3-2-1 margin hedge; financial hedge book only",
     }
@@ -249,7 +260,11 @@ def main() -> None:
 
     (output / "README.md").write_text(
         "# Point-in-time risk sample\n\n"
-        + ("**SYNTHETIC DEMO. Not observed market performance.**\n\n" if args.mode == "demo" else "**Public-data historical sample; not a forecast or live risk feed.**\n\n")
+        + (
+            "**SYNTHETIC DEMO. Not observed market performance.**\n\n"
+            if args.mode == "demo"
+            else "**Public-data historical sample; not a forecast or live risk feed.**\n\n"
+        )
         + f"Last price date: {as_of}. Generation timestamp and input checksum are in `analysis_metadata.json`.\n\n"
         + "The book is +30 CL, -20 RB and -10 HO contracts: a refiner's financial hedge of a 30,000-bbl 3-2-1 margin exposure. Physical margin is excluded. A hedge loss can offset a physical gain.\n\n"
         + "Read `executive_summary.md`, `var_method_comparison.csv`, `var_backtest_summary.csv`, and the stress tables. `var_backtest.svg` plots forecasts against subsequent P&L. Exact prices and configuration are saved here.\n\n"

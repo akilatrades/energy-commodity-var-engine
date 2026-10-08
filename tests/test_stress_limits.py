@@ -22,4 +22,6 @@ def test_historical_replay_returns_worst_days():
     result = historical_replay_scenarios(prices, positions, count=2)
     assert len(result) == 2
     assert result["source_type"].eq("historical_replay").all()
-    assert result["portfolio_stress_pnl"].iloc[0] <= result["portfolio_stress_pnl"].iloc[1]
+    assert (
+        result["portfolio_stress_pnl"].iloc[0] <= result["portfolio_stress_pnl"].iloc[1]
+    )

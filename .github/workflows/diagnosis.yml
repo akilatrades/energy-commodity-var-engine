@@ -1,0 +1,34 @@
+name: Reproduce risk diagnosis and audit dated contracts
+on:
+  workflow_dispatch:
+  push:
+    branches: [research-october]
+    paths: ['.github/workflows/diagnosis.yml']
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: pytest
+      - run: python run_diagnostics.py
+      - run: python probe_contract_data.py
+      - run: pip freeze > outputs/contract_audit_2026-10/environment.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: risk-diagnosis-contract-audit
+          path: |
+            outputs/diagnosis_2026-10
+            outputs/contract_audit_2026-10
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f outputs/diagnosis_2026-10 outputs/contract_audit_2026-10
+          git diff --cached --quiet || git commit -m "Save exception diagnosis and Yahoo contract availability audit"
+          git push
