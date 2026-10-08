@@ -1,7 +1,9 @@
 """Full revaluation of European option legs plus linear futures on one factor."""
 
 from dataclasses import dataclass
+
 import numpy as np
+
 from src.option_pricing import black76
 
 

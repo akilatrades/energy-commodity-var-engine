@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 DEFAULT_SYMBOLS = ["CL=F", "RB=F", "HO=F", "NG=F"]
 
 

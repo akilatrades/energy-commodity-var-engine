@@ -1,6 +1,8 @@
 import unittest
+
 import numpy as np
 import pandas as pd
+
 from src.continuous import build_continuous
 from src.nonlinear import OptionLeg, full_revaluation_pnl
 

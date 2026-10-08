@@ -5,9 +5,10 @@ American option or a monthly average-price swap/collar pricing model.
 """
 
 from math import exp, isfinite, log, sqrt
+
+import numpy as np
 from scipy.optimize import brentq
 from scipy.stats import norm
-import numpy as np
 
 
 def black76(forward, strike, maturity, volatility, rate=0.0, kind="call"):

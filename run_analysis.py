@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
-import json
 import hashlib
+import json
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,7 +33,6 @@ from src.stress import (
     run_hypothetical_scenarios,
 )
 from src.var_models import summarize_var_methods
-
 
 CONFIG = Path("config")
 DATA = Path("data")

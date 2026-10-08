@@ -2,10 +2,12 @@
 
 import argparse
 from pathlib import Path
-import pandas as pd
+
 import matplotlib.pyplot as plt
+import pandas as pd
+
 from src.continuous import build_continuous
-from src.var_models import historical_var, historical_es
+from src.var_models import historical_es, historical_var
 
 
 def main():
