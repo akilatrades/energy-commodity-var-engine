@@ -1,0 +1,12 @@
+{
+  "data_type": "Observed Yahoo daily Close proxies, not verified exchange settlements",
+  "schedule": "2025 Q1: Nov2026; Q2: Dec2026; Q3: Jan2027; Q4: Feb2027, all three roots",
+  "purpose": "Real-panel reconciliation example using available long-dated contracts; NOT the original front-month book",
+  "observations": 250,
+  "roll_dates": 3,
+  "incomplete_quote_dates": [
+    "2025-07-04"
+  ],
+  "calendar": "Common dates across all twelve quoted contracts; incomplete dates explicitly audited. P&L spans each remaining observation interval.",
+  "limitation": "Arbitrary quarterly demonstration schedule, short 60-day VaR window, no validation of Yahoo roll dates or seasonal front-month jumps"
+}
