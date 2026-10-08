@@ -1,0 +1,17 @@
+{
+  "input_sha256": "953693721be113a6be424fd2b725705b80e37bfc5ef5b76fa42791baa065c87d",
+  "confidence": 0.99,
+  "window": 250,
+  "warmup": 60,
+  "primary_decay": 0.94,
+  "sensitivity_decays": [
+    0.97,
+    0.99
+  ],
+  "calendar_first_weekdays": 3,
+  "calendar_last_weekdays": 2,
+  "calendar_holidays": "not adjusted",
+  "excluded_realized_losses": 0,
+  "actual_roll_corrections": 0,
+  "interpretation": "retrospective diagnostics; 2024 onward is a stability segment, not an untouched holdout"
+}

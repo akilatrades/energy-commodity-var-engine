@@ -1,0 +1,28 @@
+{
+  "as_of": "2026-10-08",
+  "vendor": "Yahoo Finance via yfinance",
+  "price_type": "Vendor daily Close, NOT verified exchange settlement",
+  "attempted_year": "2025",
+  "schedule": "Hold delivery month two months ahead; switch at first observed date of month",
+  "root_results": [
+    {
+      "root": "CL",
+      "status": "unavailable",
+      "reason": "Missing selected or outgoing contract settlement on 2025-01-02 00:00:00"
+    },
+    {
+      "root": "RB",
+      "status": "unavailable",
+      "reason": "Missing selected or outgoing contract settlement on 2025-01-02 00:00:00"
+    },
+    {
+      "root": "HO",
+      "status": "unavailable",
+      "reason": "Missing selected or outgoing contract settlement on 2025-01-02 00:00:00"
+    }
+  ],
+  "available_tickers": 13,
+  "attempted_tickers": 48,
+  "raw_sha256": "146b0ad9fa27dbf540e3a50b17ec85d56e2f87edb10150ebb6c968b29fa500ae",
+  "warning": "Ticker existence does not establish usable historical coverage; no synthetic fallback."
+}
