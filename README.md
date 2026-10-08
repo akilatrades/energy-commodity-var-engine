@@ -2,6 +2,8 @@
 
 How much can a refiner’s financial hedge lose in one day, and do the risk models recognize the same tail events?
 
+**The saved public-data backtest misses the nominal 1% exception target.** Historical VaR is exceeded on 42 of 1,954 forecasts (2.15%); the Normal and weighted-history models each have 44 exceptions (2.25%). All three fail the saved 5% coverage and independence checks. That is a model/data limitation to investigate, not a validated risk forecast.
+
 The first point to get right is the book’s direction: a refiner buys crude and sells products, so the financial margin hedge is **long crude and short products**. A loss on that hedge can offset a gain in the physical margin. This engine reports the financial hedge book; it does not call a hedge loss a loss for the entire refinery.
 
 ## The book
@@ -16,9 +18,22 @@ That is the hedge of a stylized 30,000-barrel crude input yielding 20,000 barrel
 
 ## Results you can inspect
 
-The [sample workflow](https://github.com/akilatrades/energy-commodity-var-engine/actions/workflows/sample-run.yml) runs a dated public-data analysis, tests it and commits the result under `outputs/sample_run_2026-10/` when the download succeeds. It must fail rather than replace missing public data with synthetic prices. The price cutoff is October 7, 2026 (download end is exclusive).
+The [October 2026 sample](outputs/sample_run_2026-10/README.md) was run on public Yahoo continuous futures proxies with **2,205 aligned price observations through October 7, 2026**. Current risk uses the last 250 price changes. These numbers describe the financial hedge only.
 
-Each completed sample includes the VaR/ES comparison, rolling backtest exception counts, stress results, charts, exact price inputs, configuration and input checksum. Check the sample’s metadata for its actual last observation. Results are point-in-time examples, not current risk limits or forecasts.
+| Method | 99% one-day VaR | Expected Shortfall |
+|---|---:|---:|
+| Historical | $181,399 | $195,300 |
+| Normal | $161,159 | $184,634 |
+| Student-t Monte Carlo | $175,837 | $222,113 |
+| Weighted historical | $128,292 | $162,354 |
+
+[Backtest exceptions](outputs/sample_run_2026-10/var_backtest_summary.csv) · [Stress results](outputs/sample_run_2026-10/hypothetical_stress_scenarios.csv) · [Executive summary](outputs/sample_run_2026-10/executive_summary.md)
+
+![Historical VaR backtest](outputs/sample_run_2026-10/var_backtest.svg)
+
+The product-rally stress loses about $931,652 on the hedge while the matched physical margin gains. A limit status of “OK” only means the illustrative $500,000 VaR threshold was not breached; it does not mean the model passed validation.
+
+The sample contains exact price inputs, configuration, environment and input checksum. It is a point-in-time example, not a current forecast. The [sample workflow](https://github.com/akilatrades/energy-commodity-var-engine/actions/workflows/sample-run.yml) fails if the public download fails, rather than substituting synthetic prices.
 
 The offline option and roll examples are explicitly **synthetic fixtures**. Their numbers demonstrate calculations; they are not observed trading performance.
 
