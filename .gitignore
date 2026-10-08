@@ -13,3 +13,7 @@ outputs/*.svg
 outputs/*.json
 outputs/executive_summary.md
 !outputs/README.md
+
+outputs/sample_run_2026-10_synthetic/
+outputs/demo/
+outputs/replay/

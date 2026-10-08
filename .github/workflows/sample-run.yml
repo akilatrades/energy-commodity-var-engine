@@ -1,0 +1,33 @@
+name: Save public-data risk sample
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/sample-run.yml']
+permissions:
+  contents: write
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: pytest
+      - name: Run public-data sample (failure must not fall back to synthetic)
+        run: python run_analysis.py --mode live --end 2026-10-08 --output-dir outputs/sample_run_2026-10
+      - name: Save exact environment
+        run: pip freeze > outputs/sample_run_2026-10/environment.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-risk-sample-2026-10
+          path: outputs/sample_run_2026-10
+      - name: Commit point-in-time sample
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f outputs/sample_run_2026-10
+          git diff --cached --quiet || git commit -m "Save October 2026 public-data refiner risk sample"
+          git push

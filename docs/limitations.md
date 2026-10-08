@@ -4,9 +4,9 @@ This repository is an analytical Market Risk portfolio project, not a production
 
 ## Instruments
 
-The portfolio contains linear futures only.
+The default refiner hedge book contains linear futures. A separate one-factor WTI option case study now supports European Black-76 full revaluation.
 
-The framework does not currently model options, nonlinear Greeks, swaps with complex settlement rules, structured products, or path-dependent derivatives.
+The option case study excludes volatility surfaces, American exercise, average-price settlement and path-dependent derivatives. It is not combined with the default refiner book.
 
 ## Market data
 
@@ -14,7 +14,7 @@ Historical mode uses public continuous futures proxies.
 
 A production implementation would require exact instrument identifiers, official or independently validated settlement prices, contract calendars, explicit roll logic, timestamp controls, stale-price checks, and governed market-data lineage.
 
-Continuous futures construction can introduce roll-related price changes that influence calculated P&L and VaR.
+Continuous futures construction can introduce roll-related price changes that influence calculated P&L and VaR. The new contract-panel roll builder is tested on a synthetic fixture; it does not correct the Yahoo proxy used in the live sample. See continuous_series.md.
 
 ## VaR
 
