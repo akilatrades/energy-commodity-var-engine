@@ -12,7 +12,9 @@ from src.portfolio import FuturesPosition, pnl_history_from_prices
 def load_stress_scenarios(path: str | Path) -> pd.DataFrame:
     frame = pd.read_csv(path)
     if "scenario" not in frame.columns or frame.empty:
-        raise ValueError("Stress scenario file must contain a scenario column and rows.")
+        raise ValueError(
+            "Stress scenario file must contain a scenario column and rows."
+        )
     return frame
 
 

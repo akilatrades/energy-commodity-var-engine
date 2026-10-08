@@ -3,12 +3,19 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from src.filtered_historical import ewma_prior_volatility, filtered_forecasts, month_turn_flags
+from src.filtered_historical import (
+    ewma_prior_volatility,
+    filtered_forecasts,
+    month_turn_flags,
+)
 
 
 class FilterTests(unittest.TestCase):
     def sample(self):
-        return pd.Series(np.random.default_rng(2).normal(size=600), index=pd.bdate_range("2020-01-01", periods=600))
+        return pd.Series(
+            np.random.default_rng(2).normal(size=600),
+            index=pd.bdate_range("2020-01-01", periods=600),
+        )
 
     def test_future_losses_cannot_change_forecast(self):
         x = self.sample()
@@ -22,11 +29,13 @@ class FilterTests(unittest.TestCase):
     def test_ewma_timing_and_scaling(self):
         x = self.sample()
         s = ewma_prior_volatility(x)
-        self.assertAlmostEqual(s.iloc[60]**2, np.square(x.iloc[:60]).mean())
-        self.assertAlmostEqual(s.iloc[61]**2, .94*s.iloc[60]**2+.06*x.iloc[60]**2)
+        self.assertAlmostEqual(s.iloc[60] ** 2, np.square(x.iloc[:60]).mean())
+        self.assertAlmostEqual(
+            s.iloc[61] ** 2, 0.94 * s.iloc[60] ** 2 + 0.06 * x.iloc[60] ** 2
+        )
         a = filtered_forecasts(x)
-        b = filtered_forecasts(10*x)
-        np.testing.assert_allclose(10*a["var"], b["var"])
+        b = filtered_forecasts(10 * x)
+        np.testing.assert_allclose(10 * a["var"], b["var"])
 
     def test_flags_do_not_remove_realized_losses_or_use_sample_end(self):
         x = self.sample()

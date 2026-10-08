@@ -81,9 +81,8 @@ def make_demo_prices(n_days: int = 1_500, seed: int = 42) -> pd.DataFrame:
     volatility_state = np.empty(n_days)
     volatility_state[0] = 1.0
     for i in range(1, n_days):
-        volatility_state[i] = (
-            0.92 * volatility_state[i - 1]
-            + 0.08 * (0.75 + 0.75 * abs(rng.normal()))
+        volatility_state[i] = 0.92 * volatility_state[i - 1] + 0.08 * (
+            0.75 + 0.75 * abs(rng.normal())
         )
 
     log_returns = innovations * volatility_state[:, None]

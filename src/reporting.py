@@ -56,13 +56,13 @@ def write_executive_summary(
 |---|---:|---:|
 {risk_rows}
 
-Largest component VaR contributor: **{top['symbol']}** at approximately **{_money(float(top['component_var']))}**.
+Largest component VaR contributor: **{top["symbol"]}** at approximately **{_money(float(top["component_var"]))}**.
 
 ## Stress testing
 
-Worst configured hypothetical scenario: **{worst_hypo['scenario']}**, portfolio P&L **{_money(float(worst_hypo['portfolio_stress_pnl']))}**.
+Worst configured hypothetical scenario: **{worst_hypo["scenario"]}**, portfolio P&L **{_money(float(worst_hypo["portfolio_stress_pnl"]))}**.
 
-Worst observed historical replay in the analyzed sample: **{worst_hist['scenario']}**, portfolio P&L **{_money(float(worst_hist['portfolio_stress_pnl']))}**.
+Worst observed historical replay in the analyzed sample: **{worst_hist["scenario"]}**, portfolio P&L **{_money(float(worst_hist["portfolio_stress_pnl"]))}**.
 
 ## Model validation
 
@@ -74,10 +74,10 @@ Validation results are diagnostics. They do not establish that future losses are
 
 ## Limit monitoring
 
-Current Historical VaR: **{_money(float(limit_result['value']))}**
-Approved illustrative limit: **{_money(float(limit_result['limit']))}**
-Utilization: **{limit_result['utilization']:.1%}**
-Status: **{limit_result['status']}**
+Current Historical VaR: **{_money(float(limit_result["value"]))}**
+Approved illustrative limit: **{_money(float(limit_result["limit"]))}**
+Utilization: **{limit_result["utilization"]:.1%}**
+Status: **{limit_result["status"]}**
 
 ## Model-use boundary
 

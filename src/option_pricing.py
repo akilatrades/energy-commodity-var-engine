@@ -3,6 +3,7 @@
 Black-76 is an approximation for European terminal-settled structures, not an
 American option or a monthly average-price swap/collar pricing model.
 """
+
 from math import exp, isfinite, log, sqrt
 from scipy.optimize import brentq
 from scipy.stats import norm
@@ -23,7 +24,9 @@ def black76(forward, strike, maturity, volatility, rate=0.0, kind="call"):
     st = volatility * sqrt(maturity)
     d1 = log(forward / strike) / st + st / 2
     d2 = d1 - st
-    return float(discount * sign * (forward * norm.cdf(sign*d1) - strike * norm.cdf(sign*d2)))
+    return float(
+        discount * sign * (forward * norm.cdf(sign * d1) - strike * norm.cdf(sign * d2))
+    )
 
 
 def costless_ceiling(forward, floor, maturity, volatility, rate=0.0, subfloor=None):
@@ -35,8 +38,10 @@ def costless_ceiling(forward, floor, maturity, volatility, rate=0.0, subfloor=No
         if not 0 < subfloor < floor:
             raise ValueError("Require 0 < subfloor < floor")
         target -= black76(forward, subfloor, maturity, volatility, rate, "put")
+
     def objective(k):
         return black76(forward, k, maturity, volatility, rate, "call") - target
+
     upper = forward * 2
     while objective(upper) > 0 and upper < forward * 1e6:
         upper *= 2
@@ -45,8 +50,17 @@ def costless_ceiling(forward, floor, maturity, volatility, rate=0.0, subfloor=No
     return float(brentq(objective, forward, upper))
 
 
-def producer_revenues(terminal, basis, forward, floor, ceiling, three_way_ceiling,
-                      subfloor, barrels=100_000, hedge_fraction=1.0):
+def producer_revenues(
+    terminal,
+    basis,
+    forward,
+    floor,
+    ceiling,
+    three_way_ceiling,
+    subfloor,
+    barrels=100_000,
+    hedge_fraction=1.0,
+):
     """Expiry revenues. Swap and futures use the same terminal reference.
 
     Zero net premiums assumed for collars solved at inception. Interim margin,
@@ -62,10 +76,12 @@ def producer_revenues(terminal, basis, forward, floor, ceiling, three_way_ceilin
         raise ValueError("Terminal prices and basis must be finite")
     physical = s + b
     put = np.maximum(floor - s, 0)
-    collar = put - np.maximum(s-ceiling, 0)
-    three = put - np.maximum(subfloor-s, 0) - np.maximum(s-three_way_ceiling, 0)
-    return {"unhedged": barrels*physical,
-            "futures": barrels*(physical+hedge_fraction*(forward-s)),
-            "fixed_price_swap": barrels*(physical+hedge_fraction*(forward-s)),
-            "costless_collar": barrels*(physical+hedge_fraction*collar),
-            "three_way_collar": barrels*(physical+hedge_fraction*three)}
+    collar = put - np.maximum(s - ceiling, 0)
+    three = put - np.maximum(subfloor - s, 0) - np.maximum(s - three_way_ceiling, 0)
+    return {
+        "unhedged": barrels * physical,
+        "futures": barrels * (physical + hedge_fraction * (forward - s)),
+        "fixed_price_swap": barrels * (physical + hedge_fraction * (forward - s)),
+        "costless_collar": barrels * (physical + hedge_fraction * collar),
+        "three_way_collar": barrels * (physical + hedge_fraction * three),
+    }

@@ -11,7 +11,9 @@ import numpy as np
 import pandas as pd
 
 
-def ewma_prior_volatility(pnl: pd.Series, decay: float = 0.94, warmup: int = 60) -> pd.Series:
+def ewma_prior_volatility(
+    pnl: pd.Series, decay: float = 0.94, warmup: int = 60
+) -> pd.Series:
     """Use a past-only warmup second moment; do not publish warmup residuals."""
     x = pd.Series(pnl, copy=True).astype(float)
     if not 0 < decay < 1 or warmup < 2 or len(x) <= warmup:
@@ -30,7 +32,9 @@ def ewma_prior_volatility(pnl: pd.Series, decay: float = 0.94, warmup: int = 60)
     return sigma
 
 
-def month_turn_flags(dates: pd.DatetimeIndex, first: int = 3, last: int = 2) -> pd.Series:
+def month_turn_flags(
+    dates: pd.DatetimeIndex, first: int = 3, last: int = 2
+) -> pd.Series:
     """First/last Monday-Friday weekdays, not exchange sessions or known rolls.
 
     Uses calendar month bounds, never the observed sample's end; holidays are
@@ -80,18 +84,26 @@ def filtered_forecasts(
         name += "_exclude_calendar_training"
     rows = []
     for i in range(window + warmup, len(x)):
-        train = residuals.iloc[i-window:i]
-        train = train[~flags.iloc[i-window:i]]
+        train = residuals.iloc[i - window : i]
+        train = train[~flags.iloc[i - window : i]]
         if len(train) < 20 or train.isna().any():
             raise ValueError("Insufficient standardized training shocks")
         scenarios = train * float(sigma.iloc[i]) if filtered else train
-        cutoff = float(scenarios.quantile(1-confidence))
+        cutoff = float(scenarios.quantile(1 - confidence))
         var = max(-cutoff, 0.0)
         tail = scenarios[scenarios <= cutoff]
-        rows.append(dict(date=x.index[i], method=name, window=window,
-                         decay=decay if filtered else None,
-                         realized_pnl=float(x.iloc[i]), var=var,
-                         expected_shortfall=max(-float(tail.mean()), 0.0),
-                         exception=bool(x.iloc[i] < -var), training_shocks=len(train),
-                         prior_sigma=float(sigma.iloc[i])))
+        rows.append(
+            dict(
+                date=x.index[i],
+                method=name,
+                window=window,
+                decay=decay if filtered else None,
+                realized_pnl=float(x.iloc[i]),
+                var=var,
+                expected_shortfall=max(-float(tail.mean()), 0.0),
+                exception=bool(x.iloc[i] < -var),
+                training_shocks=len(train),
+                prior_sigma=float(sigma.iloc[i]),
+            )
+        )
     return pd.DataFrame(rows).set_index("date")
