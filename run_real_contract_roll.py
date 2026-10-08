@@ -16,6 +16,18 @@ def main():
     out = Path("outputs/real_contract_roll_2026-10")
     out.mkdir(exist_ok=True)
     panel = pd.read_csv(source, parse_dates=["date"])
+    wanted = [f"{root}{suffix}.NYM" for root in ["CL", "RB", "HO"]
+              for suffix in ["X26", "Z26", "F27", "G27"]]
+    year = panel[panel.contract.isin(wanted) & (panel.date >= "2025-01-01")
+                 & (panel.date < "2026-01-01")]
+    wide = year.pivot(index="date", columns="contract", values="settlement").reindex(columns=wanted)
+    missing = wide.isna().any(axis=1)
+    wide.loc[missing].to_csv(out / "incomplete_quote_dates.csv")
+    common_dates = wide.index[~missing]
+    # Explicit common-quote calendar: endpoint differences retain the cumulative
+    # move across an omitted quote date. Do not describe these as exchange daily
+    # settlements or delete P&L observations after computing returns.
+    panel = panel[panel.date.isin(common_dates)]
     results = {}
     for root in ["CL", "RB", "HO"]:
         contracts = [f"{root}{suffix}.NYM" for suffix in ["X26", "Z26", "F27", "G27"]]
@@ -59,6 +71,8 @@ def main():
         schedule="2025 Q1: Nov2026; Q2: Dec2026; Q3: Jan2027; Q4: Feb2027, all three roots",
         purpose="Real-panel reconciliation example using available long-dated contracts; NOT the original front-month book",
         observations=len(pnl), roll_dates=len(roll_dates),
+        incomplete_quote_dates=[str(d.date()) for d in wide.index[missing]],
+        calendar="Common dates across all twelve quoted contracts; incomplete dates explicitly audited. P&L spans each remaining observation interval.",
         limitation="Arbitrary quarterly demonstration schedule, short 60-day VaR window, no validation of Yahoo roll dates or seasonal front-month jumps"
     ), indent=2) + "\n")
     print(pd.DataFrame(comparison).to_string(index=False))
