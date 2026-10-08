@@ -1,5 +1,4 @@
 symbol,name,contracts,contract_multiplier,currency
-CL=F,WTI Crude Oil,40,1000,USD
-RB=F,RBOB Gasoline,-15,42000,USD
-HO=F,Heating Oil,-12,42000,USD
-NG=F,Henry Hub Natural Gas,35,10000,USD
+CL=F,WTI crude input hedge,30,1000,USD
+RB=F,Gasoline output hedge,-20,42000,USD
+HO=F,Distillate output hedge,-10,42000,USD

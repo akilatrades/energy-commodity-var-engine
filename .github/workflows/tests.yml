@@ -32,3 +32,8 @@ jobs:
 
       - name: Run end-to-end demo smoke test
         run: python run_analysis.py --mode demo --output-dir /tmp/energy-var-demo
+
+      - name: Run option revaluation and roll demonstration
+        run: |
+          python run_option_risk.py --output-dir /tmp/option-risk-demo
+          python run_roll_analysis.py --settlements examples/roll_fixture/settlements.csv --schedule examples/roll_fixture/schedule.csv --data-label "SYNTHETIC contract fixture" --output-dir /tmp/roll-demo

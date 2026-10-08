@@ -1,174 +1,69 @@
-# Energy Commodity Portfolio VaR & Market Risk Analytics
+# Risk in a refiner’s 3-2-1 hedge book
 
-[![tests](https://github.com/akilatrades/energy-commodity-var-engine/actions/workflows/tests.yml/badge.svg)](https://github.com/akilatrades/energy-commodity-var-engine/actions/workflows/tests.yml)
+How much can a refiner’s financial hedge lose in one day, and do the risk models recognize the same tail events?
 
-Python market-risk framework for a linear energy futures portfolio. The project converts position-level market moves into daily P&L, compares multiple VaR methodologies, measures Expected Shortfall, attributes portfolio risk, runs hypothetical and historical stress tests, validates VaR forecasts out of sample, and monitors limit utilization.
+The first point to get right is the book’s direction: a refiner buys crude and sells products, so the financial margin hedge is **long crude and short products**. A loss on that hedge can offset a gain in the physical margin. This engine reports the financial hedge book; it does not call a hedge loss a loss for the entire refinery.
 
-> **Status:** v1.0 complete.
+## The book
 
-## Current results / repository status
+| Position | Contracts | Physical units |
+|---|---:|---:|
+| WTI crude (CL) | +30 | +30,000 bbl |
+| RBOB gasoline (RB) | -20 | -840,000 gal = -20,000 bbl |
+| Heating oil / distillate proxy (HO) | -10 | -420,000 gal = -10,000 bbl |
 
-The project currently uses an example portfolio of energy futures:
+That is the hedge of a stylized 30,000-barrel crude input yielding 20,000 barrels of gasoline and 10,000 barrels of distillate. It is a benchmark crack hedge, not a refinery process model. Yields, quality, location, timing and operating costs remain outside the book.
 
-- **40 WTI crude oil contracts**
-- **short 15 RBOB gasoline contracts**
-- **short 12 heating-oil contracts**
-- **35 Henry Hub natural-gas contracts**
+## Results you can inspect
 
-"Short" means the example portfolio benefits when that futures price falls and loses when it rises.
+The [sample workflow](https://github.com/akilatrades/energy-commodity-var-engine/actions/workflows/sample-run.yml) runs a dated public-data analysis, tests it and commits the result under `outputs/sample_run_2026-10/` when the download succeeds. It must fail rather than replace missing public data with synthetic prices. The price cutoff is October 7, 2026 (download end is exclusive).
 
-| Setting | Plain-English meaning | Current value |
-|---|---|---:|
-| Risk horizon | How far ahead the model measures risk | 1 trading day |
-| Confidence level | The model focuses on losses expected to be exceeded only about 1% of the time | 99% |
-| Historical window | Number of recent market observations used for the main risk estimate | 250 |
-| Monte Carlo simulation | Number of simulated market scenarios used in one of the risk models | 50,000 |
-| Weighted-history setting | Gives more importance to recent market moves than older ones | 0.97 decay |
-| VaR limit | Example maximum one-day risk limit used by the project | $500,000 |
+Each completed sample includes the VaR/ES comparison, rolling backtest exception counts, stress results, charts, exact price inputs, configuration and input checksum. Check the sample’s metadata for its actual last observation. Results are point-in-time examples, not current risk limits or forecasts.
 
-### What the project currently does
+The offline option and roll examples are explicitly **synthetic fixtures**. Their numbers demonstrate calculations; they are not observed trading performance.
 
-The pipeline can calculate daily portfolio profit and loss, estimate **Value at Risk (VaR)**, estimate **Expected Shortfall**, show which positions contribute most to risk, run severe market scenarios, test whether the VaR model performed reasonably on past data, and compare the result with a predefined risk limit.
+## Models
 
-In simple terms:
+- Historical, Normal, Student-t Monte Carlo and exponentially weighted historical VaR/ES.
+- Component VaR, hypothetical stress, worst historical fixed-book days and a configurable illustrative limit.
+- Rolling forecasts made before each realized P&L, with exception counts and coverage/independence diagnostics.
+- A contract-panel continuous-series builder that reconciles adjusted changes to the contract actually held.
+- A separate full-revaluation WTI producer option case study using European Black-76 puts/calls, including collars and three-way collars.
 
-- **VaR** asks: "How large could a bad one-day loss be under normal model assumptions?"
-- **Expected Shortfall** asks: "If losses are worse than the VaR threshold, how large are those bad losses on average?"
-- **Stress testing** asks: "What happens if markets move sharply in a specific scenario?"
-- **Backtesting** checks whether the model's past risk forecasts matched what actually happened often enough.
+[Refiner thesis and signs](docs/refiner_hedge.md) · [Contract rolls](docs/continuous_series.md) · [Option risk](docs/nonlinear_risk.md)
 
-The project tests four example stress scenarios: a broad energy selloff, a crude-oil rally where refined products lag, a refined-products price squeeze, and a natural-gas price shock.
+## Run it
 
-A fixed live historical risk number is **not saved in the repository on purpose**. Live results change as market data changes, and the project also has a synthetic demo mode. Keeping generated results out of GitHub prevents a demo number from being mistaken for a real historical result. Running `python run_analysis.py --mode live` creates the latest public-data version locally.
-
-## Scope
-
-The reference portfolio contains WTI crude oil, RBOB gasoline, heating oil, and Henry Hub natural gas futures.
-
-The analytical workflow is:
-
-~~~text
-Positions
-  -> Daily P&L
-  -> VaR / Expected Shortfall
-  -> Risk Attribution
-  -> Stress Testing
-  -> Model Validation
-  -> Limit Monitoring
-  -> Executive Risk Summary
-~~~
-
-The objective is not to maximize model complexity. It is to show a controlled, explainable Market Risk process in which the risk number, its drivers, the model assumptions, and the validation results can all be reviewed independently.
-
-## Risk framework
-
-| Area | Implementation |
-|---|---|
-| P&L | Linear futures P&L by position and total portfolio |
-| Historical risk | 99% Historical VaR and Expected Shortfall |
-| Parametric risk | Normal-theory VaR and Expected Shortfall |
-| Monte Carlo | Correlated Student-t risk-factor simulation |
-| Responsive history | Exponentially weighted Historical VaR |
-| Attribution | Parametric component VaR by position |
-| Stress | Configurable hypothetical shocks plus historical replay |
-| Validation | Rolling out-of-sample forecasts, Kupiec coverage, Christoffersen independence |
-| Sensitivity | Alternative lookback windows and decay factors |
-| Controls | Configurable VaR limit and utilization status |
-| Reporting | Management-style executive summary and reproducible CSV outputs |
-
-## Portfolio configuration
-
-Position assumptions are separated from calculation code in **config/portfolio.csv**.
-
-| Symbol | Market | Contract multiplier |
-|---|---|---:|
-| CL=F | WTI crude oil | 1,000 bbl |
-| RB=F | RBOB gasoline | 42,000 gal |
-| HO=F | Heating oil | 42,000 gal |
-| NG=F | Henry Hub natural gas | 10,000 MMBtu |
-
-Hypothetical stress scenarios, model parameters, and risk limits are also stored under **config/** so they can be reviewed without changing Python source code.
-
-## Data
-
-Historical mode uses public Yahoo Finance continuous futures proxies. These are suitable for portfolio research and model demonstration, but they are not equivalent to a production trading firm's contract-level settlement data.
-
-The project explicitly treats them as **public continuous futures proxies**, not as an exchange-grade risk feed. Roll construction, exact contract mapping, independent price verification, and production market-data controls are outside the scope of this repository.
-
-Demo mode generates deterministic synthetic data for offline reproducibility and CI smoke testing. Synthetic results are not presented as historical findings.
-
-## Repository structure
-
-~~~text
-.
-├── config/
-│   ├── model_config.json
-│   ├── portfolio.csv
-│   ├── risk_limits.json
-│   └── stress_scenarios.csv
-├── data/
-├── docs/
-├── notebooks/
-├── outputs/
-├── src/
-│   ├── attribution.py
-│   ├── backtesting.py
-│   ├── data.py
-│   ├── limits.py
-│   ├── portfolio.py
-│   ├── reporting.py
-│   ├── stress.py
-│   └── var_models.py
-├── tests/
-├── run_analysis.py
-├── pyproject.toml
-└── requirements.txt
-~~~
-
-## Reproduce the analysis
-
-~~~bash
-python -m venv .venv
-source .venv/bin/activate
+```bash
 pip install -r requirements.txt
 pytest
-python run_analysis.py --mode live
-~~~
+python run_analysis.py --mode live --end 2026-10-08 --output-dir outputs/sample_run_2026-10
+```
 
-Windows activation:
+Offline smoke test:
 
-~~~text
-.venv\Scripts\activate
-~~~
+```bash
+python run_analysis.py --mode demo --output-dir outputs/demo
+python run_option_risk.py
+python run_roll_analysis.py --settlements examples/roll_fixture/settlements.csv --schedule examples/roll_fixture/schedule.csv --data-label "SYNTHETIC contract fixture" --output-dir outputs/roll_fixture
+```
 
-For an offline deterministic smoke test:
+To replay a saved public price sample with the current configuration:
 
-~~~bash
-python run_analysis.py --mode demo
-~~~
+```bash
+python run_analysis.py --mode snapshot --prices outputs/sample_run_2026-10/input_prices.csv --output-dir outputs/replay
+```
 
-Generated results are written to **outputs/** and include method comparison, component VaR, hypothetical and historical stress results, model-validation summaries, calibration sensitivity, limit utilization, charts, metadata, and an executive summary.
+For an exact replay, first use the configuration saved alongside that sample. The Monte Carlo seed is fixed. All risks use absolute price changes so negative underlying futures prices are not discarded from the linear model.
 
-## Model validation
+## What I learned / what I would do differently
 
-The project does not treat a VaR estimate as valid simply because the formula runs.
+Position signs and contract units matter before model selection. A 3-2-1 ratio in barrels has to be translated into 1,000-barrel crude contracts and 42,000-gallon product contracts. A risk number also needs a data-construction explanation: subtracting an unadjusted front-month series can turn a contract switch into fake P&L.
 
-Historical, Parametric, and Weighted Historical VaR are evaluated using rolling out-of-sample forecasts. Validation reports exception counts, expected versus realized exception rates, Kupiec unconditional coverage, Christoffersen independence, and conditional coverage. A separate sensitivity table shows how results change across reasonable lookback windows and decay factors without automatically selecting whichever specification produces the most favorable backtest.
+I would obtain dated settlement panels before claiming a historical improvement from roll adjustment. The code and reconciliation tests are implemented, but the committed roll example is synthetic. Yahoo’s continuous proxy cannot be reverse-engineered into exact contract history from prices alone. I would also add observed volatility surfaces and basis factors before combining the option example with a physical business exposure.
 
-## Future improvements
+## Boundaries
 
-Potential next steps include:
+The live book still uses Yahoo continuous proxies; the new roll adjustment has **not** been applied to them. The option module is a standalone WTI producer example, not part of the refiner’s default linear risk total. Its volatility is fixed unless explicitly stressed; it excludes volatility smile, American exercise, average-price settlement, liquidity, margin and counterparty risk. Black-76 rejects nonpositive forwards.
 
-- options and nonlinear risk using Greeks,
-- exact contract-level market data and roll mapping,
-- liquidity, concentration, margin, and funding risk extensions.
-
-## Governance and limitations
-
-This repository is an analytical portfolio project, not a production Market Risk platform.
-
-Important exclusions include nonlinear options and Greeks, intraday position changes, official exchange settlement feeds, independent market-data verification, exact futures roll mapping, liquidity and concentration add-ons, margin and funding, P&L explain, counterparty credit risk, formal model approval, and production trading-system integration.
-
-See **docs/limitations.md** for the full model-use boundary and **docs/model_validation.md** for the validation framework.
-
-Educational and portfolio use only. Not investment advice.
+[Model limitations](docs/limitations.md) · [Validation](docs/model_validation.md). Public or synthetic portfolio research only; no employer or client data.

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import hashlib
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -12,7 +14,7 @@ import pandas as pd
 
 from src.attribution import component_var
 from src.backtesting import calibration_sensitivity, compare_backtests
-from src.data import download_yahoo_prices, make_demo_prices, save_price_snapshot
+from src.data import download_yahoo_prices, make_demo_prices, save_price_snapshot, validate_price_history
 from src.limits import limit_status, load_risk_limits
 from src.portfolio import load_positions_csv, pnl_history_from_prices, positions_to_frame
 from src.reporting import write_executive_summary
@@ -93,8 +95,10 @@ def make_charts(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["demo", "live"], required=True)
+    parser.add_argument("--mode", choices=["demo", "live", "snapshot"], required=True)
     parser.add_argument("--output-dir", default="outputs")
+    parser.add_argument("--prices", help="Previously saved public prices CSV for snapshot mode")
+    parser.add_argument("--end", help="Exclusive live download end date (YYYY-MM-DD)")
     args = parser.parse_args()
 
     output = Path(args.output_dir)
@@ -109,11 +113,24 @@ def main() -> None:
         prices = download_yahoo_prices(
             [p.symbol for p in positions],
             start=model["historical_start"],
+            end=args.end,
         )
         save_price_snapshot(prices, DATA / "latest_public_price_snapshot.csv")
+    elif args.mode == "snapshot":
+        if not args.prices:
+            parser.error("--prices is required for snapshot mode")
+        prices = pd.read_csv(args.prices, index_col="date", parse_dates=True)
+        validate_price_history(prices)
     else:
         prices = make_demo_prices()
         save_price_snapshot(prices, DATA / "demo_synthetic_prices.csv")
+
+    # Store exact input prices/configs alongside each point-in-time result.
+    save_price_snapshot(prices, output / "input_prices.csv")
+    for config_path in CONFIG.glob("*"):
+        if config_path.is_file():
+            (output / "config").mkdir(exist_ok=True)
+            shutil.copyfile(config_path, output / "config" / config_path.name)
 
     pnl = pnl_history_from_prices(prices, positions)
 
@@ -201,7 +218,7 @@ def main() -> None:
         "mode": args.mode,
         "data_source": (
             "Yahoo Finance public continuous futures proxies"
-            if args.mode == "live"
+            if args.mode in {"live", "snapshot"}
             else "deterministic synthetic demo data"
         ),
         "observations": int(len(prices)),
@@ -209,6 +226,9 @@ def main() -> None:
         "confidence": model["confidence"],
         "current_risk_window": risk_window,
         "backtest_window": model["backtest_window"],
+        "input_prices_sha256": hashlib.sha256((output / "input_prices.csv").read_bytes()).hexdigest(),
+        "requested_end_exclusive": args.end,
+        "portfolio_thesis": "Refiner 3-2-1 margin hedge; financial hedge book only",
     }
     (output / "analysis_metadata.json").write_text(
         json.dumps(metadata, indent=2),
@@ -225,6 +245,16 @@ def main() -> None:
         historical_stress=historical,
         backtest_summary=backtest_summary,
         limit_result=limit_result,
+    )
+
+    (output / "README.md").write_text(
+        "# Point-in-time risk sample\n\n"
+        + ("**SYNTHETIC DEMO. Not observed market performance.**\n\n" if args.mode == "demo" else "**Public-data historical sample; not a forecast or live risk feed.**\n\n")
+        + f"Last price date: {as_of}. Generation timestamp and input checksum are in `analysis_metadata.json`.\n\n"
+        + "The book is +30 CL, -20 RB and -10 HO contracts: a refiner's financial hedge of a 30,000-bbl 3-2-1 margin exposure. Physical margin is excluded. A hedge loss can offset a physical gain.\n\n"
+        + "Read `executive_summary.md`, `var_method_comparison.csv`, `var_backtest_summary.csv`, and the stress tables. `var_backtest.svg` plots forecasts against subsequent P&L. Exact prices and configuration are saved here.\n\n"
+        + "The Yahoo continuous proxies have unknown roll construction. The contract-panel roll builder is a separate, tested module and has not been applied to these proxy prices.\n",
+        encoding="utf-8",
     )
 
     print(f"Analysis complete in {args.mode.upper()} mode. Results: {output}")
