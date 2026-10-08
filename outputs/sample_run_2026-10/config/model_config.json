@@ -1,0 +1,18 @@
+{
+  "confidence": 0.99,
+  "historical_start": "2018-01-01",
+  "current_risk_window": 250,
+  "backtest_window": 250,
+  "backtest_methods": [
+    "historical",
+    "parametric",
+    "weighted_historical"
+  ],
+  "weighted_decay": 0.97,
+  "parametric_mean_adjusted": false,
+  "monte_carlo_sims": 50000,
+  "monte_carlo_student_t_df": 6,
+  "historical_stress_count": 5,
+  "sensitivity_windows": [125, 250, 500],
+  "sensitivity_decays": [0.94, 0.97, 0.99]
+}

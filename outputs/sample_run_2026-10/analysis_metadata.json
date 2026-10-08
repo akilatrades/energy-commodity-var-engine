@@ -1,0 +1,18 @@
+{
+  "generated_at_utc": "2026-10-08T16:47:11.140438+00:00",
+  "as_of": "2026-10-07",
+  "mode": "live",
+  "data_source": "Yahoo Finance public continuous futures proxies",
+  "observations": 2205,
+  "symbols": [
+    "CL=F",
+    "RB=F",
+    "HO=F"
+  ],
+  "confidence": 0.99,
+  "current_risk_window": 250,
+  "backtest_window": 250,
+  "input_prices_sha256": "953693721be113a6be424fd2b725705b80e37bfc5ef5b76fa42791baa065c87d",
+  "requested_end_exclusive": "2026-10-08",
+  "portfolio_thesis": "Refiner 3-2-1 margin hedge; financial hedge book only"
+}

@@ -1,0 +1,4 @@
+symbol,name,contracts,contract_multiplier,currency
+CL=F,WTI crude input hedge,30,1000,USD
+RB=F,Gasoline output hedge,-20,42000,USD
+HO=F,Distillate output hedge,-10,42000,USD

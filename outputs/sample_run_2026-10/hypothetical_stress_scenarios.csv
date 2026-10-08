@@ -1,0 +1,5 @@
+scenario,source_type,CL=F_shock_pct,CL=F_pnl,RB=F_shock_pct,RB=F_pnl,HO=F_shock_pct,HO=F_pnl,portfolio_stress_pnl
+Broad energy selloff,hypothetical,-0.2,-529679.9926757812,-0.18,489011.0401153564,-0.17,330060.7953071594,289391.84274673456
+Crack compression crude rally products lag,hypothetical,0.2,529679.9926757812,0.05,-135836.40003204346,0.05,-97076.70450210571,296766.8881416321
+Product rally hedge loss physical margin gain,hypothetical,0.0,0.0,0.2,-543345.6001281738,0.2,-388306.81800842285,-931652.4181365967
+Distillate demand collapse,hypothetical,0.0,0.0,0.0,-0.0,-0.3,582460.2270126343,582460.2270126343
