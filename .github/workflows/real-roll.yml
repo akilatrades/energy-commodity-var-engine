@@ -1,0 +1,24 @@
+name: Reconcile real dated-contract closes
+on:
+  workflow_dispatch:
+  push:
+    branches: [research-october]
+    paths: ['.github/workflows/real-roll.yml']
+permissions:
+  contents: write
+jobs:
+  real-roll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python run_real_contract_roll.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f outputs/real_contract_roll_2026-10
+          git diff --cached --quiet || git commit -m "Reconcile actual long-dated contract rolls against held-contract P&L"
+          git push
