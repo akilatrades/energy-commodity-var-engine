@@ -29,6 +29,18 @@ At the 5% threshold, the primary 0.94 filter **passes unconditional coverage but
 
 On the retrospective 2024-onward segment, baseline exceptions fall from 19/696 (2.73%) to 12/696 (1.72%) under FHS; its conditional-coverage p-value is 0.095. Fixed 0.97 and 0.99 decay sensitivities are reported alongside the primary model.
 
+## Why the primary decay is 0.94
+
+RiskMetrics' [1996 Technical Document, §5.3.2, printed pp. 97–100](https://www.msci.com/documents/10199/5915b101-4206-4ba0-aee2-3449d5c7e95a) uses 0.94 for daily EWMA volatility and 0.97 for monthly data. This project uses that conventional daily baseline in its portfolio-P&L filter. The [initial implementation](https://github.com/akilatrades/energy-commodity-var-engine/blob/9a96c1594173d8de0b7af4895c91f8188bb141d6/run_diagnostics.py) explicitly fixes 0.94 as primary and reports 0.97 and 0.99 as sensitivities, with no p-value-based selection step. That designation is visible before the committed automated result run; the historical exercise remains retrospective rather than a preregistered holdout test.
+
+| Daily EWMA decay | Weight on latest squared P&L | Weight half-life (observations) | Exceptions / 1,894 | Coverage p | Pass at 5%? |
+|---|---:|---:|---:|---:|---|
+| **0.94 — primary** | 6% | 11.2 | 27 | 0.0802 | Yes |
+| 0.97 — sensitivity | 3% | 22.8 | 29 | 0.0312 | No |
+| 0.99 — sensitivity | 1% | 69.0 | 39 | 0.000050 | No |
+
+Half-life is `ln(0.5) / ln(decay)`. The larger decays retain volatility history longer and react more slowly to a new shock. Both are applied to daily observations here, so they test responsiveness rather than a different forecast horizon. All sensitivity results are retained, including failures; the 0.94 coverage pass does not establish an optimal decay or resolve independence.
+
 ## Filter construction
 
 The recursion is `sigma[t]^2 = lambda*sigma[t-1]^2 + (1-lambda)*pnl[t-1]^2`, with zero conditional mean. Each historical residual is `pnl[j]/sigma[j]`, using volatility known before observation j. A forecast rescales the previous 250 residuals by today's prior-only sigma and takes the historical loss quantile.

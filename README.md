@@ -21,6 +21,12 @@ FHS passes unconditional coverage at the 5% threshold: the test does not reject 
 
 [Diagnosis and April 20, 2020](docs/backtest_diagnosis.md) · [Full model comparison](outputs/diagnosis_2026-10/model_comparison.csv) · [Exception ledger](outputs/diagnosis_2026-10/exception_ledger.csv)
 
+## Why decay 0.94?
+
+The fixed primary decay is **0.94, the conventional RiskMetrics daily EWMA baseline** ([1996 Technical Document, §5.3.2](https://www.msci.com/documents/10199/5915b101-4206-4ba0-aee2-3449d5c7e95a)). It gives yesterday's squared P&L a 6% weight and has a weight half-life of about 11 trading observations. The [initial diagnosis implementation](https://github.com/akilatrades/energy-commodity-var-engine/blob/9a96c1594173d8de0b7af4895c91f8188bb141d6/run_diagnostics.py) already designates 0.94 as primary and 0.97/0.99 as fixed sensitivities; the code does not select a decay by its coverage p-value.
+
+All three outcomes remain visible: coverage p-values are **0.0802, 0.0312 and 0.000050** for 0.94, 0.97 and 0.99. Only 0.94 passes coverage at 5%. Here, 0.97 and 0.99 are slower daily filters; RiskMetrics' original 0.97 recommendation was for monthly data. The standard supplies a defensible baseline, while the sensitivity results show how much the conclusion depends on responsiveness.
+
 ## The book
 
 A refiner buys crude and sells products, so the financial margin hedge is **long crude and short products**. A hedge loss can offset a gain in the physical margin.
