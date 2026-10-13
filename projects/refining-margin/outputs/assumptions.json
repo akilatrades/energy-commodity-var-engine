@@ -1,0 +1,12 @@
+{
+  "input": "data/front_month_proxies_2018_2026.csv",
+  "input_sha256": "953693721be113a6be424fd2b725705b80e37bfc5ef5b76fa42791baa065c87d",
+  "data_class": "Yahoo Finance continuous front-month futures proxies",
+  "sample_start": "2018-01-02",
+  "sample_end": "2026-10-07",
+  "crack": "(2 x RB x 42 + 1 x HO x 42 - 3 x CL) / 3, USD/bbl",
+  "signal": "z-score vs trailing 60 days; short above +1.5, long below -1.5",
+  "timing": "Position set at close t from data through t; P&L is the t to t+1 crack change",
+  "excluded": "Changes into the first trading day of each month (product rolls) and April 20-22, 2020",
+  "costs": "None; results are before transaction costs"
+}

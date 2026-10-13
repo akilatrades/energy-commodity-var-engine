@@ -1,6 +1,6 @@
 # Risk in a refiner’s 3-2-1 hedge book
 
-**Volatility scaling cuts VaR exceptions from 2.16% to 1.43% and passes the 5% coverage test; exception clustering remains unresolved.** The baseline underestimates tail risk. The diagnosis separates volatility clustering from contract-selection problems, then tests EWMA filtered historical simulation (FHS) on the same forecast dates.
+**Volatility scaling cuts VaR exceptions from 2.16% to 1.43% and passes the 5% coverage test, but it still fails the independence test (p = 0.0058): exceptions cluster, so the model is not yet adequate.** The baseline underestimates tail risk. The diagnosis separates volatility clustering from contract-selection problems, then tests EWMA filtered historical simulation (FHS) on the same forecast dates.
 
 How much can a refiner’s financial hedge lose in one day, and which model responds best when volatility changes?
 
@@ -56,6 +56,10 @@ The [dated-contract study](docs/continuous_series.md) audits 48 Yahoo tickers an
 - A separate WTI producer option case study using European Black-76 full revaluation.
 
 [Refiner thesis and signs](docs/refiner_hedge.md) · [Contract rolls](docs/continuous_series.md) · [Option risk](docs/nonlinear_risk.md)
+
+## Companion: does the crack spread mean-revert?
+
+[Refining margin project](projects/refining-margin/README.md) uses the same price snapshot to build the 3-2-1 crack spread and test a pre-specified mean-reversion rule. It finds no usable edge (51.7% hit rate, p = 0.68). Changes on the first trading day of each month are about 2.9 times normal size because the product contracts roll, and leaving them in, or making a one-day look-ahead error, would have produced a misleading result.
 
 ## Run it
 

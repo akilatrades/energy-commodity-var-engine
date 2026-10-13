@@ -42,3 +42,9 @@ jobs:
         run: |
           python run_diagnostics.py
           python run_real_contract_roll.py
+
+      - name: Verify and reproduce refining margin study
+        working-directory: projects/refining-margin
+        run: |
+          pytest test_model.py
+          python run_analysis.py
