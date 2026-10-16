@@ -40,18 +40,18 @@ def main():
         d = int((~flag & ~exceptions).sum())
         odds, pvalue = fisher_exact([[a, b], [c, d]])
         bands.append(
-            dict(
-                first_weekdays=first,
-                last_weekdays=last,
-                flagged_dates=int(flag.sum()),
-                dates=len(flag),
-                flagged_exception_count=a,
-                exceptions=int(exceptions.sum()),
-                calendar_baseline=float(flag.mean()),
-                exception_share_flagged=float(flag[exceptions].mean()),
-                odds_ratio=odds,
-                descriptive_fisher_p=pvalue,
-            )
+            {
+                "first_weekdays": first,
+                "last_weekdays": last,
+                "flagged_dates": int(flag.sum()),
+                "dates": len(flag),
+                "flagged_exception_count": a,
+                "exceptions": int(exceptions.sum()),
+                "calendar_baseline": float(flag.mean()),
+                "exception_share_flagged": float(flag[exceptions].mean()),
+                "odds_ratio": odds,
+                "descriptive_fisher_p": pvalue,
+            }
         )
     pd.DataFrame(bands).to_csv(output / "calendar_diagnostic.csv", index=False)
     original.groupby(original.index.year).exception.agg(["sum", "count"]).rename(
@@ -131,20 +131,20 @@ def main():
     fig.tight_layout()
     fig.savefig(output / "backtest_comparison.svg")
     plt.close(fig)
-    metadata = dict(
-        input_sha256=hashlib.sha256(Path(args.prices).read_bytes()).hexdigest(),
-        confidence=0.99,
-        window=250,
-        warmup=60,
-        primary_decay=0.94,
-        sensitivity_decays=[0.97, 0.99],
-        calendar_first_weekdays=3,
-        calendar_last_weekdays=2,
-        calendar_holidays="not adjusted",
-        excluded_realized_losses=0,
-        actual_roll_corrections=0,
-        interpretation="retrospective diagnostics; 2024 onward is a stability segment, not an untouched holdout",
-    )
+    metadata = {
+        "input_sha256": hashlib.sha256(Path(args.prices).read_bytes()).hexdigest(),
+        "confidence": 0.99,
+        "window": 250,
+        "warmup": 60,
+        "primary_decay": 0.94,
+        "sensitivity_decays": [0.97, 0.99],
+        "calendar_first_weekdays": 3,
+        "calendar_last_weekdays": 2,
+        "calendar_holidays": "not adjusted",
+        "excluded_realized_losses": 0,
+        "actual_roll_corrections": 0,
+        "interpretation": "retrospective diagnostics; 2024 onward is a stability segment, not an untouched holdout",
+    }
     (output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(
         summary[summary.period == "all_common_dates"][

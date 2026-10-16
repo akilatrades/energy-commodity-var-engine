@@ -49,7 +49,7 @@ def main():
         dates = sorted(p.date.unique())
         schedule = pd.DataFrame(
             [
-                dict(date=d, contract=contracts[(pd.Timestamp(d).month - 1) // 3])
+                {"date": d, "contract": contracts[(pd.Timestamp(d).month - 1) // 3]}
                 for d in dates
             ]
         )
@@ -81,16 +81,16 @@ def main():
         var = -series.shift(1).rolling(60).quantile(0.01)
         valid = var.notna()
         comparison.append(
-            dict(
-                series=field,
-                days=len(series),
-                pnl_std=series.std(),
-                historical_var_99=-series.quantile(0.01),
-                worst_loss=-series.min(),
-                rolling_window=60,
-                forecasts=int(valid.sum()),
-                exceptions=int((series[valid] < -var[valid]).sum()),
-            )
+            {
+                "series": field,
+                "days": len(series),
+                "pnl_std": series.std(),
+                "historical_var_99": -series.quantile(0.01),
+                "worst_loss": -series.min(),
+                "rolling_window": 60,
+                "forecasts": int(valid.sum()),
+                "exceptions": int((series[valid] < -var[valid]).sum()),
+            }
         )
         forecasts.append(
             pd.DataFrame({"series": field, "pnl": series[valid], "var99": var[valid]})
@@ -101,16 +101,16 @@ def main():
     roll_dates.to_csv(out / "roll_dates.csv")
     (out / "metadata.json").write_text(
         json.dumps(
-            dict(
-                data_type="Observed Yahoo daily Close proxies, not verified exchange settlements",
-                schedule="2025 Q1: Nov2026; Q2: Dec2026; Q3: Jan2027; Q4: Feb2027, all three roots",
-                purpose="Real-panel reconciliation example using available long-dated contracts; NOT the original front-month book",
-                observations=len(pnl),
-                roll_dates=len(roll_dates),
-                incomplete_quote_dates=[str(d.date()) for d in wide.index[missing]],
-                calendar="Common dates across all twelve quoted contracts; incomplete dates explicitly audited. P&L spans each remaining observation interval.",
-                limitation="Arbitrary quarterly demonstration schedule, short 60-day VaR window, no validation of Yahoo roll dates or seasonal front-month jumps",
-            ),
+            {
+                "data_type": "Observed Yahoo daily Close proxies, not verified exchange settlements",
+                "schedule": "2025 Q1: Nov2026; Q2: Dec2026; Q3: Jan2027; Q4: Feb2027, all three roots",
+                "purpose": "Real-panel reconciliation example using available long-dated contracts; NOT the original front-month book",
+                "observations": len(pnl),
+                "roll_dates": len(roll_dates),
+                "incomplete_quote_dates": [str(d.date()) for d in wide.index[missing]],
+                "calendar": "Common dates across all twelve quoted contracts; incomplete dates explicitly audited. P&L spans each remaining observation interval.",
+                "limitation": "Arbitrary quarterly demonstration schedule, short 60-day VaR window, no validation of Yahoo roll dates or seasonal front-month jumps",
+            },
             indent=2,
         )
         + "\n"

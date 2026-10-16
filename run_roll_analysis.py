@@ -31,13 +31,13 @@ def main():
     for name in ["raw", "adjusted"]:
         pnl = series[name + "_change"].dropna() * a.contracts * a.multiplier
         rows.append(
-            dict(
-                series=name,
-                var_99=historical_var(pnl),
-                es_99=historical_es(pnl),
-                pnl_std=pnl.std(),
-                data_label=a.data_label,
-            )
+            {
+                "series": name,
+                "var_99": historical_var(pnl),
+                "es_99": historical_es(pnl),
+                "pnl_std": pnl.std(),
+                "data_label": a.data_label,
+            }
         )
     pd.DataFrame(rows).to_csv(out / "roll_var_comparison.csv", index=False)
     ax = series[["raw_change", "adjusted_change"]].plot(

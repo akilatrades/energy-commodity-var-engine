@@ -6,7 +6,7 @@ import argparse
 import hashlib
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -221,7 +221,7 @@ def main() -> None:
 
     as_of = pd.Timestamp(prices.index[-1]).date().isoformat()
     metadata = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "as_of": as_of,
         "mode": args.mode,
         "data_source": (
@@ -229,7 +229,7 @@ def main() -> None:
             if args.mode in {"live", "snapshot"}
             else "deterministic synthetic demo data"
         ),
-        "observations": int(len(prices)),
+        "observations": len(prices),
         "symbols": [p.symbol for p in positions],
         "confidence": model["confidence"],
         "current_risk_window": risk_window,

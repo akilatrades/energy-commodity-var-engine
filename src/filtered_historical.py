@@ -93,17 +93,17 @@ def filtered_forecasts(
         var = max(-cutoff, 0.0)
         tail = scenarios[scenarios <= cutoff]
         rows.append(
-            dict(
-                date=x.index[i],
-                method=name,
-                window=window,
-                decay=decay if filtered else None,
-                realized_pnl=float(x.iloc[i]),
-                var=var,
-                expected_shortfall=max(-float(tail.mean()), 0.0),
-                exception=bool(x.iloc[i] < -var),
-                training_shocks=len(train),
-                prior_sigma=float(sigma.iloc[i]),
-            )
+            {
+                "date": x.index[i],
+                "method": name,
+                "window": window,
+                "decay": decay if filtered else None,
+                "realized_pnl": float(x.iloc[i]),
+                "var": var,
+                "expected_shortfall": max(-float(tail.mean()), 0.0),
+                "exception": bool(x.iloc[i] < -var),
+                "training_shocks": len(train),
+                "prior_sigma": float(sigma.iloc[i]),
+            }
         )
     return pd.DataFrame(rows).set_index("date")

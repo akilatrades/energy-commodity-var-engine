@@ -50,30 +50,30 @@ def main():
         pnl = full_revaluation_pnl(f, changes, legs, futures_barrels=q, rate=r)
         scenarios[name] = pnl
         rows.append(
-            dict(
-                book=name,
-                var_99=historical_var(pd.Series(pnl)),
-                es_99=historical_es(pd.Series(pnl)),
-            )
+            {
+                "book": name,
+                "var_99": historical_var(pd.Series(pnl)),
+                "es_99": historical_es(pd.Series(pnl)),
+            }
         )
     pd.DataFrame(rows).to_csv(out / "full_revaluation_var.csv", index=False)
     pd.DataFrame(scenarios, index=changes.index).to_csv(out / "scenario_pnl.csv")
     (out / "assumptions.json").write_text(
         json.dumps(
-            dict(
-                data_class="public snapshot" if a.prices else "synthetic demo",
-                forward=f,
-                floor=floor,
-                subfloor=subfloor,
-                ceiling=ceiling,
-                three_way_ceiling=three,
-                maturity=t,
-                volatility=vol,
-                rate=r,
-                barrels=q,
-                horizon="1/252 year",
-                scope="standalone WTI producer proxy; not combined with refiner book; fixed volatility",
-            ),
+            {
+                "data_class": "public snapshot" if a.prices else "synthetic demo",
+                "forward": f,
+                "floor": floor,
+                "subfloor": subfloor,
+                "ceiling": ceiling,
+                "three_way_ceiling": three,
+                "maturity": t,
+                "volatility": vol,
+                "rate": r,
+                "barrels": q,
+                "horizon": "1/252 year",
+                "scope": "standalone WTI producer proxy; not combined with refiner book; fixed volatility",
+            },
             indent=2,
         )
         + "\n"

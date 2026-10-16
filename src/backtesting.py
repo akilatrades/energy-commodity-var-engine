@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 
 import pandas as pd
@@ -56,7 +57,7 @@ def rolling_var_forecasts(
 
 def kupiec_pof_test(exceptions: pd.Series, confidence: float = 0.99) -> dict:
     e = pd.Series(exceptions).astype(bool).dropna()
-    n = int(len(e))
+    n = len(e)
     x = int(e.sum())
     if n == 0:
         raise ValueError("No exception observations supplied.")
@@ -97,7 +98,7 @@ def christoffersen_independence_test(exceptions: pd.Series) -> dict:
         raise ValueError("At least two exception observations are required.")
 
     n00 = n01 = n10 = n11 = 0
-    for prev, curr in zip(e[:-1], e[1:]):
+    for prev, curr in itertools.pairwise(e):
         if prev == 0 and curr == 0:
             n00 += 1
         elif prev == 0 and curr == 1:

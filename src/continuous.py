@@ -50,15 +50,15 @@ def build_continuous(settlements: pd.DataFrame, schedule: pd.DataFrame) -> pd.Da
             ) from exc
         gap = new - old
         rows.append(
-            dict(
-                date=date,
-                contract=contract,
-                raw=new,
-                roll_gap=gap,
-                held_contract_pnl=np.nan
+            {
+                "date": date,
+                "contract": contract,
+                "raw": new,
+                "roll_gap": gap,
+                "held_contract_pnl": np.nan
                 if previous_price is None
                 else old - previous_price,
-            )
+            }
         )
         previous_contract, previous_price = contract, new
     out = pd.DataFrame(rows).set_index("date")

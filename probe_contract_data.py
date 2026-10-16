@@ -39,29 +39,34 @@ def main():
                 if not np.isfinite(close).all():
                     raise ValueError("Nonfinite quote")
                 audit.append(
-                    dict(
-                        root=root,
-                        ticker=symbol,
-                        observations=len(close),
-                        first=str(close.index.min().date()) if len(close) else "",
-                        last=str(close.index.max().date()) if len(close) else "",
-                        error="" if len(close) else "No closes returned",
-                    )
+                    {
+                        "root": root,
+                        "ticker": symbol,
+                        "observations": len(close),
+                        "first": str(close.index.min().date()) if len(close) else "",
+                        "last": str(close.index.max().date()) if len(close) else "",
+                        "error": "" if len(close) else "No closes returned",
+                    }
                 )
                 panels.extend(
-                    dict(date=date, root=root, contract=symbol, settlement=float(value))
+                    {
+                        "date": date,
+                        "root": root,
+                        "contract": symbol,
+                        "settlement": float(value),
+                    }
                     for date, value in close.items()
                 )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - the audit records any failure
                 audit.append(
-                    dict(
-                        root=root,
-                        ticker=symbol,
-                        observations=0,
-                        first="",
-                        last="",
-                        error=f"{type(exc).__name__}: {exc}"[:400],
-                    )
+                    {
+                        "root": root,
+                        "ticker": symbol,
+                        "observations": 0,
+                        "first": "",
+                        "last": "",
+                        "error": f"{type(exc).__name__}: {exc}"[:400],
+                    }
                 )
     pd.DataFrame(audit).to_csv(out / "availability.csv", index=False)
     panel = pd.DataFrame(panels, columns=["date", "root", "contract", "settlement"])
@@ -80,10 +85,12 @@ def main():
         dates = sorted(p.date.unique())
         schedule = pd.DataFrame(
             [
-                dict(
-                    date=d,
-                    contract=ticker(root, pd.Timestamp(d) + pd.offsets.MonthBegin(2)),
-                )
+                {
+                    "date": d,
+                    "contract": ticker(
+                        root, pd.Timestamp(d) + pd.offsets.MonthBegin(2)
+                    ),
+                }
                 for d in dates
             ]
         )
@@ -100,15 +107,15 @@ def main():
             series = build_continuous(p[["date", "contract", "settlement"]], schedule)
             series.to_csv(out / f"{root}_continuous.csv")
             report.append(
-                dict(
-                    root=root,
-                    status="built",
-                    dates=len(series),
-                    roll_dates=int((series.roll_gap != 0).sum()),
-                )
+                {
+                    "root": root,
+                    "status": "built",
+                    "dates": len(series),
+                    "roll_dates": int((series.roll_gap != 0).sum()),
+                }
             )
         except ValueError as exc:
-            report.append(dict(root=root, status="unavailable", reason=str(exc)))
+            report.append({"root": root, "status": "unavailable", "reason": str(exc)})
     # A matched financial book is reported only when every leg has a real panel.
     if all(row["status"] == "built" for row in report):
         books = {}
@@ -125,30 +132,30 @@ def main():
         matched.to_csv(out / "matched_book_pnl.csv")
         pd.DataFrame(
             [
-                dict(
-                    series=k,
-                    days=len(matched),
-                    historical_var_99=-matched[k].quantile(0.01),
-                    worst_loss=-matched[k].min(),
-                    pnl_std=matched[k].std(),
-                )
+                {
+                    "series": k,
+                    "days": len(matched),
+                    "historical_var_99": -matched[k].quantile(0.01),
+                    "worst_loss": -matched[k].min(),
+                    "pnl_std": matched[k].std(),
+                }
                 for k in books
             ]
         ).to_csv(out / "matched_book_comparison.csv", index=False)
-    metadata = dict(
-        as_of="2026-10-08",
-        vendor="Yahoo Finance via yfinance",
-        price_type="Vendor daily Close, NOT verified exchange settlement",
-        attempted_year="2025",
-        schedule="Hold delivery month two months ahead; switch at first observed date of month",
-        root_results=report,
-        available_tickers=sum(x["observations"] > 0 for x in audit),
-        attempted_tickers=len(audit),
-        raw_sha256=hashlib.sha256(
+    metadata = {
+        "as_of": "2026-10-08",
+        "vendor": "Yahoo Finance via yfinance",
+        "price_type": "Vendor daily Close, NOT verified exchange settlement",
+        "attempted_year": "2025",
+        "schedule": "Hold delivery month two months ahead; switch at first observed date of month",
+        "root_results": report,
+        "available_tickers": sum(x["observations"] > 0 for x in audit),
+        "attempted_tickers": len(audit),
+        "raw_sha256": hashlib.sha256(
             (out / "vendor_closes.csv.gz").read_bytes()
         ).hexdigest(),
-        warning="Ticker existence does not establish usable historical coverage; no synthetic fallback.",
-    )
+        "warning": "Ticker existence does not establish usable historical coverage; no synthetic fallback.",
+    }
     (out / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(json.dumps(metadata, indent=2))
 
