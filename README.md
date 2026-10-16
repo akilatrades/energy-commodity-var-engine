@@ -1,12 +1,14 @@
-# Risk in a refiner’s 3-2-1 hedge book
+# Risk in a refiner's 3-2-1 hedge book
 
-**Volatility scaling cuts VaR exceptions from 2.16% to 1.43% and passes the 5% coverage test, but it still fails the independence test (p = 0.0058): exceptions cluster, so the model is not yet adequate.** The baseline underestimates tail risk. The diagnosis separates volatility clustering from contract-selection problems, then tests EWMA filtered historical simulation (FHS) on the same forecast dates.
+How much can a refiner's financial hedge lose in one day, and does a standard risk model get that number right?
 
-How much can a refiner’s financial hedge lose in one day, and which model responds best when volatility changes?
+**Short answer: the plain historical model misses too often, scaling it by recent volatility fixes most of that, and even the better model still fails one test.** A 99% one-day VaR should be exceeded about 1% of the time. The plain historical model was exceeded 2.16% of the time over 1,894 daily forecasts (2019 to October 2026). A volatility-scaled version (filtered historical simulation, "FHS") cut that to 1.43%, which passes the standard coverage test. But its misses still come in clusters (independence test p = 0.0058), which means it is slow to react when markets turn. I report both results; the model is better, not adequate.
 
-## What improved
+The book is a stylized refiner's margin hedge: long 30 crude contracts, short 20 gasoline and 10 distillate. A hedge loss offsets a gain in the physical margin, so this is the risk of the hedge, not of the business.
 
-All four models below use **1,894 matching forecasts, March 29, 2019–October 7, 2026**, with a 250-observation estimation window and a 99% VaR target. The dollar column is the average forecast VaR over those dates.
+## The comparison
+
+All four models use the same **1,894 forecast dates, March 29, 2019 to October 7, 2026**, a 250-day estimation window and a 99% one-day VaR. "Exceptions" are days the loss was bigger than the forecast; the target rate is 1%. The coverage test asks whether the exception rate is consistent with 1%; the independence test asks whether exceptions are spread out rather than clustered. Higher p-values are better; 0.05 is the usual bar.
 
 | Method | Average 99% one-day VaR | Exceptions | Exception rate | Coverage p | Independence p |
 |---|---:|---:|---:|---:|---:|
@@ -15,7 +17,7 @@ All four models below use **1,894 matching forecasts, March 29, 2019–October 7
 | Weighted historical, decay 0.97 | $122,219 | 39 | 2.06% | 0.000050 | 0.0521 |
 | **EWMA FHS, decay 0.94** | **$121,020** | **27** | **1.43%** | **0.0802** | **0.0058** |
 
-FHS passes unconditional coverage at the 5% threshold: the test does not reject the nominal 1% exception rate. It still fails independence and joint conditional coverage. Average VaR rises by about 32%, showing the cost of recognizing more risk. Excluding possible month-turn rolls from training worsens coverage, so those observations are retained.
+FHS is the only model that passes coverage. It still fails independence: when one exception happens, another tends to follow, so the model is reacting late. Its average VaR is about 32% higher than the plain historical model's, which is the cost of recognizing more risk. Dropping the month-turn contract-roll days from training made coverage worse, so they stay in.
 
 ![Historical versus filtered VaR](outputs/diagnosis_2026-10/backtest_comparison.svg)
 
@@ -23,13 +25,13 @@ FHS passes unconditional coverage at the 5% threshold: the test does not reject 
 
 ## Why decay 0.94?
 
-The fixed primary decay is **0.94, the conventional RiskMetrics daily EWMA baseline** ([1996 Technical Document, §5.3.2](https://www.msci.com/documents/10199/5915b101-4206-4ba0-aee2-3449d5c7e95a)). It gives yesterday's squared P&L a 6% weight and has a weight half-life of about 11 trading observations. The [initial diagnosis implementation](https://github.com/akilatrades/energy-commodity-var-engine/blob/9a96c1594173d8de0b7af4895c91f8188bb141d6/run_diagnostics.py) already designates 0.94 as primary and 0.97/0.99 as fixed sensitivities; the code does not select a decay by its coverage p-value.
+The volatility filter's decay was fixed at **0.94 before the results were seen**, because it is the standard RiskMetrics setting for daily data ([1996 Technical Document, §5.3.2](https://www.msci.com/documents/10199/5915b101-4206-4ba0-aee2-3449d5c7e95a)): yesterday's squared P&L gets a 6% weight and the memory half-life is about 11 trading days. The [first version of the diagnosis](https://github.com/akilatrades/energy-commodity-var-engine/blob/9a96c1594173d8de0b7af4895c91f8188bb141d6/run_diagnostics.py) already named 0.94 as primary and 0.97 and 0.99 as sensitivities; nothing was chosen by looking at p-values.
 
-All three outcomes remain visible: coverage p-values are **0.0802, 0.0312 and 0.000050** for 0.94, 0.97 and 0.99. Only 0.94 passes coverage at 5%. Here, 0.97 and 0.99 are slower daily filters; RiskMetrics' original 0.97 recommendation was for monthly data. The standard supplies a defensible baseline, while the sensitivity results show how much the conclusion depends on responsiveness.
+The sensitivities are reported anyway: coverage p-values are **0.080, 0.031 and 0.00005** for decays of 0.94, 0.97 and 0.99. Only the standard setting passes, and the slower filters do worse, which says the result depends on how quickly the model reacts.
 
 ## The book
 
-A refiner buys crude and sells products, so the financial margin hedge is **long crude and short products**. A hedge loss can offset a gain in the physical margin.
+A refiner buys crude and sells products, so the hedge that protects its margin is **long crude futures and short product futures**. When products rally, the hedge loses and the physical margin gains.
 
 | Position | Contracts | Physical units |
 |---|---:|---:|
@@ -87,8 +89,8 @@ python run_roll_analysis.py --settlements examples/roll_fixture/settlements.csv 
 
 ## What I learned / what I would do differently
 
-Position signs and contract units come first. The next question is what the price history actually represents: April 2020 shows why contract selection matters, and the backtest shows why volatility scaling matters. They require different fixes.
+Get the position signs and contract units right first; everything else sits on them. Then ask what the price history actually is: April 2020 showed that the continuous series I was using switched contracts at the worst moment, and the backtest showed that a model with no volatility memory misses too often. Those are two different problems with two different fixes.
 
-I would obtain expired-contract settlements and specify the refiner’s roll policy, then monitor the fixed FHS model on new observations. For options, the next inputs are observed volatility surfaces and physical basis factors.
+Next I would buy expired-contract settlements so the roll is explicit rather than inferred, and keep scoring the fixed FHS model on new days instead of tuning it. For the options work, the missing inputs are observed volatility surfaces and physical basis.
 
 The project's data, model and validation boundaries are collected in [Limitations](docs/limitations.md).
