@@ -12,6 +12,8 @@
   "calendar_last_weekdays": 2,
   "calendar_holidays": "not adjusted",
   "excluded_realized_losses": 0,
+  "roll_days_removed_variants": "historical_common_roll_days_removed, ewma_fhs_0.94_roll_days_removed: first observed trading day of each month removed from estimation and scoring",
+  "roll_days_removed": 106,
   "actual_roll_corrections": 0,
   "interpretation": "retrospective diagnostics; 2024 onward is a stability segment, not an untouched holdout"
 }

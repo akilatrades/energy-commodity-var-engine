@@ -12,7 +12,11 @@ import pandas as pd
 from scipy.stats import fisher_exact
 
 from src.backtesting import rolling_var_forecasts, summarize_backtest
-from src.filtered_historical import filtered_forecasts, month_turn_flags
+from src.filtered_historical import (
+    filtered_forecasts,
+    month_turn_flags,
+    product_roll_flags,
+)
 from src.portfolio import load_positions_csv, pnl_history_from_prices
 
 
@@ -83,6 +87,16 @@ def main():
         forecasts.append(fhs)
     combined = filtered_forecasts(pnl, exclude_training_flags=flags)
     forecasts.append(combined)
+    # Roll-day correction (added after the October 2026 review): the RB/HO
+    # front-month switch days are removed from BOTH estimation and scoring,
+    # because their P&L is the gap between two contracts. Reported beside the
+    # raw-series results, never instead of them.
+    roll = product_roll_flags(pnl.index)
+    clean = pnl[~roll.to_numpy()]
+    for filtered, label in [(False, "historical_common"), (True, "ewma_fhs_0.94")]:
+        removed = filtered_forecasts(clean, decay=0.94, filtered=filtered)
+        removed["method"] = f"{label}_roll_days_removed"
+        forecasts.append(removed)
     for method in ["parametric", "weighted_historical"]:
         base = rolling_var_forecasts(pnl, method=method, decay=0.97)
         forecasts.append(base.loc[raw.index])
@@ -142,6 +156,10 @@ def main():
         "calendar_last_weekdays": 2,
         "calendar_holidays": "not adjusted",
         "excluded_realized_losses": 0,
+        "roll_days_removed_variants": "historical_common_roll_days_removed, "
+        "ewma_fhs_0.94_roll_days_removed: first observed trading day of each month "
+        "removed from estimation and scoring",
+        "roll_days_removed": int(roll.sum()),
         "actual_roll_corrections": 0,
         "interpretation": "retrospective diagnostics; 2024 onward is a stability segment, not an untouched holdout",
     }
