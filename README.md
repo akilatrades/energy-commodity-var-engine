@@ -2,7 +2,9 @@
 
 How much can a refiner's financial hedge lose in one day, and does a standard risk model get that number right?
 
-**Short answer: the plain historical model misses too often, scaling it by recent volatility fixes most of that, and even the better model still fails one test.** A 99% one-day VaR should be exceeded about 1% of the time. The plain historical model was exceeded 2.16% of the time over 1,894 daily forecasts (2019 to October 2026). A volatility-scaled version (filtered historical simulation, "FHS") cut that to 1.43%, which passes the standard coverage test. But its misses still come in clusters (independence test p = 0.0058), which means it is slow to react when markets turn. I report both results; the model is better, not adequate.
+**Short answer: the plain historical model misses too often, scaling it by recent volatility fixes most of that, and part of what remained was in the data, not the model.** A 99% one-day VaR should be exceeded about 1% of the time. The plain historical model was exceeded 2.16% of the time over 1,894 daily forecasts (2019 to October 2026). A volatility-scaled version (filtered historical simulation, "FHS") cut that to 1.43%, which passes the standard coverage test, but its misses came in clusters (independence test p = 0.0058).
+
+A review in October 2026 found why. The continuous gasoline and heating-oil series switch to the next contract on the first trading day of each month, and every March the gasoline switch also moves to the dearer summer grade: days with portfolio losses of $65,000 to $218,000 that a hedger who rolls before expiry would not have taken. Seven of FHS's 27 exceptions are those March days. With all 106 roll days removed from both estimation and scoring, the clustering disappears (independence p = 0.46), but FHS's exception rate rises to 1.57% (coverage p = 0.026), because the roll jumps had been inflating its VaR. FHS beats the historical model either way; neither is adequate at 99% for this book. The proper fix is P&L built from the contract actually held, rolled before expiry.
 
 The book is a stylized refiner's margin hedge: long 30 crude contracts, short 20 gasoline and 10 distillate. A hedge loss offsets a gain in the physical margin, so this is the risk of the hedge, not of the business.
 
@@ -16,8 +18,12 @@ All four models use the same **1,894 forecast dates, March 29, 2019 to October 7
 | Normal | $124,398 | 43 | 2.27% | 0.000002 | <0.000001 |
 | Weighted historical, decay 0.97 | $122,219 | 39 | 2.06% | 0.000050 | 0.0521 |
 | **EWMA FHS, decay 0.94** | **$121,020** | **27** | **1.43%** | **0.0802** | **0.0058** |
+| Historical, roll days removed (1,788 dates) | $87,362 | 40 | 2.24% | 0.000006 | <0.000001 |
+| EWMA FHS 0.94, roll days removed (1,788 dates) | $111,977 | 28 | 1.57% | 0.026 | 0.46 |
 
-FHS is the only model that passes coverage. It still fails independence: when one exception happens, another tends to follow, so the model is reacting late. Its average VaR is about 32% higher than the plain historical model's, which is the cost of recognizing more risk. Dropping the month-turn contract-roll days from training made coverage worse, so they stay in.
+On the raw series, FHS is the only model that passes coverage, and it fails independence. Eight of its 27 exceptions fall on roll days, seven of them the March gasoline grade switch; with roll days removed from estimation and scoring (the last two rows), the exceptions are no longer clustered, and coverage fails narrowly instead. Removing roll days from training only, while still scoring them, made coverage worse (an earlier sensitivity, kept in the comparison file).
+
+FHS's *average* VaR is about 32% above the historical model's, but that average is pulled up by April 2020, when FHS VaR reached $1.41 million. Its *median* VaR is lower ($69,359 against $89,328): FHS moves risk through time rather than adding it.
 
 ![Historical versus filtered VaR](outputs/diagnosis_2026-10/backtest_comparison.svg)
 
@@ -45,7 +51,7 @@ This represents the financial hedge of a stylized 30,000-barrel crude input yiel
 
 The [October 2026 snapshot](outputs/sample_run_2026-10/README.md) contains 2,205 aligned Yahoo proxy prices through October 7, along with configuration, environment, checksums, point-in-time VaR/ES and stress results. Its original historical backtest has 42 exceptions in 1,954 forecasts (2.15%); the comparison above uses fewer dates because FHS needs a volatility warmup.
 
-The [dated-contract study](docs/continuous_series.md) audits 48 Yahoo tickers and reconciles 250 real long-dated P&L intervals to the contract held. Roll adjustment lowers P&L volatility slightly; its reported 99% VaR is unchanged.
+The [dated-contract study](docs/continuous_series.md) audits 48 Yahoo tickers and reconciles 250 real long-dated P&L intervals to the contract held. On those long-dated contracts, roll adjustment lowers P&L volatility slightly and leaves the reported 99% VaR unchanged; that sample cannot show the front-month roll effect described above.
 
 [Snapshot VaR/ES and stress results](outputs/sample_run_2026-10/executive_summary.md) · [Real-contract results](outputs/real_contract_roll_2026-10/comparison.csv)
 

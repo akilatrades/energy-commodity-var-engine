@@ -7,6 +7,7 @@ from src.filtered_historical import (
     ewma_prior_volatility,
     filtered_forecasts,
     month_turn_flags,
+    product_roll_flags,
 )
 
 
@@ -45,6 +46,15 @@ class FilterTests(unittest.TestCase):
         self.assertEqual(len(a), len(b))
         flags = month_turn_flags(pd.DatetimeIndex(["2026-10-07", "2026-10-30"]))
         self.assertEqual(flags.tolist(), [False, True])
+
+    def test_roll_flags_mark_the_first_trading_day_of_each_month(self):
+        # 1 March 2025 is a Saturday: the first trading day is Monday 3 March.
+        days = pd.DatetimeIndex(
+            ["2025-02-27", "2025-02-28", "2025-03-03", "2025-03-04"]
+        )
+        self.assertEqual(product_roll_flags(days).tolist(), [True, False, True, False])
+        with self.assertRaises(ValueError):
+            product_roll_flags(days[::-1])
 
     def test_invalid_data_fails(self):
         x = self.sample()

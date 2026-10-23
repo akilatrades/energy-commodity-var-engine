@@ -20,7 +20,7 @@ Monte Carlo is implemented at the market-factor level rather than by drawing dir
 
 The model:
 
-1. estimates the covariance matrix of daily absolute futures price changes across the four energy markets;
+1. estimates the covariance matrix of daily absolute futures price changes across the three energy markets in the book (CL, RB, HO);
 2. converts that covariance into a multivariate Student-t scale matrix;
 3. draws correlated heavy-tailed futures price changes;
 4. applies those simulated changes through each contract multiplier and signed position;

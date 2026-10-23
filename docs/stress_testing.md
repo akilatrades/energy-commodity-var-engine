@@ -4,7 +4,7 @@
 
 Hypothetical percentage shocks are stored in **config/stress_scenarios.csv** rather than hard-coded in the calculation engine.
 
-The default set includes a broad energy selloff, crude rally with products lagging, refined-products squeeze, and natural-gas shock.
+The default set includes a broad energy selloff, a crude rally with products lagging, and a refined-products squeeze.
 
 Each scenario is translated through current linear futures sensitivities into position and total portfolio P&L.
 

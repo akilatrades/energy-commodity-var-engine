@@ -23,7 +23,7 @@ Daily P&L = contracts × contract multiplier × daily price change.
 
 Position P&L is calculated independently by market and then aggregated to portfolio P&L.
 
-The project uses direct settlement-price changes and contract multipliers for historical futures P&L.
+The project uses daily closing-price changes of Yahoo continuous front-month series (not exchange settlements) and contract multipliers for historical futures P&L. On each RB/HO roll day the change spans two contracts; see the README for the roll-day correction.
 
 ## Current risk window
 

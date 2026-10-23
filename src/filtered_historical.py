@@ -54,6 +54,23 @@ def month_turn_flags(
     return pd.Series(flags, index=dates, name="possible_roll_calendar_flag")
 
 
+def product_roll_flags(dates: pd.DatetimeIndex) -> pd.Series:
+    """The first observed trading day of each calendar month.
+
+    RBOB and heating-oil futures expire on the last business day of the month
+    before delivery, so a continuous front-month series (RB=F, HO=F) switches
+    to the next contract on the first trading day of each month. That day's
+    change is the price difference between two contracts, not P&L a hedger who
+    rolls before expiry would earn; each March it also includes gasoline's
+    switch to the dearer summer grade. Computable ex ante from the calendar.
+    """
+    dates = pd.DatetimeIndex(dates)
+    if dates.has_duplicates or not dates.is_monotonic_increasing:
+        raise ValueError("Dates must be unique and increasing")
+    first = pd.Series(dates, index=dates).groupby(dates.to_period("M")).transform("min")
+    return pd.Series(dates == first.to_numpy(), index=dates, name="product_roll_day")
+
+
 def filtered_forecasts(
     pnl: pd.Series,
     window: int = 250,
